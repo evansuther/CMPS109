@@ -95,13 +95,39 @@ ubigint ubigint::operator% (const ubigint& that) const {
 bool ubigint::operator== (const ubigint& that) const {
    if (ubig_value.size() != that.ubig_value.size())
       return false;
-   else return true;
+   else {
+      auto L_itr = ubig_value.crbegin();
+      auto R_itr = that.ubig_value.crbegin();
+
+      while (L_itr != ubig_value.crend() &&
+             R_itr != that.ubig_value.crend()) {
+
+         if (*L_itr != *R_itr) {
+            return false;
+         }
+         ++L_itr;
+         ++R_itr;
+      }
+      return true;
+   }
 }
 
 bool ubigint::operator< (const ubigint& that) const {
    if (ubig_value.size() != that.ubig_value.size())
-      return false;
-   else return true;
+      return ubig_value.size() < that.ubig_value.size();
+   else{
+      //auto L_itr, R_itr;
+      auto L_itr = ubig_value.crbegin();
+      auto R_itr = that.ubig_value.crbegin();
+      while (L_itr != ubig_value.crend() &&
+             R_itr != that.ubig_value.crend()){
+
+         if (*L_itr != *R_itr) {
+            return *L_itr < *R_itr;
+         }
+      }
+      return true;
+   }
 }
 
 ostream& operator<< (ostream& out, const ubigint& that) { 
