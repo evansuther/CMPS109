@@ -94,13 +94,13 @@ ubigint ubigint::operator+ (const ubigint& that) const {
 }
 
 ubigint ubigint::operator- (const ubigint& that) const {
+   DEBUGF ('n', " in sub this : " << *this 
+                  << " that : "<< that  );
    if (*this < that) throw domain_error ("ubigint::operator-(a<b)");
    ubigint result{};
    int total;
    int carry=0;
    for(unsigned int cnt = 0; cnt != ubig_value.size(); ++cnt){
-      //null ptr check
-      // this is always > than that
       if (that.ubig_value.size() <= cnt){
          total = (ubig_value.at(cnt)-'0')  + carry;
          if(total<0){
@@ -112,9 +112,7 @@ ubigint ubigint::operator- (const ubigint& that) const {
             result.ubig_value.push_back(total +'0');
          }
 
-      }
-      //that still has digits
-      else{
+      }else{
          total = (ubig_value.at(cnt)-'0') -
                      (that.ubig_value.at(cnt)-'0') + carry;
          if(total<0){
@@ -133,9 +131,8 @@ ubigint ubigint::operator- (const ubigint& that) const {
                   << "rubig_value.at(cnt)" << result.ubig_value.at(cnt)
                   );
    }
-   // normalizing zeros
    while (result.ubig_value.size() > 0 and
-          result.ubig_value.back() == 0) result.ubig_value.pop_back();
+          result.ubig_value.back() == '0') result.ubig_value.pop_back();
    return result;
 }
 
@@ -216,14 +213,14 @@ void ubigint::divide_by_2() {
    }
    // normalizer
    while (ubig_value.size() > 0 and
-          ubig_value.back() == 0) ubig_value.pop_back();
+          ubig_value.back() == '0') ubig_value.pop_back();
    DEBUGF('m', "passed in value" << *this);
    return;
 }
 
 ubigint ubigint::operator* (const ubigint& that) const {
    ubigint result{};
-   ubigint power_of_2{};
+   ubigint power_of_2;
    ubigint tmp_that{};
    ubigint tmp_this{};
    tmp_that = that;
@@ -298,7 +295,7 @@ ubigint ubigint::operator* (const ubigint& that) const {
 struct quo_rem { ubigint quotient; ubigint remainder; };
 quo_rem udivide (const ubigint& dividend, ubigint divisor) {
    // Note: divisor is modified so pass by value (copy).
-   ubigint zero {"0"};
+   ubigint zero {0};
    if (divisor == zero) throw domain_error ("udivide by zero");
    ubigint power_of_2 {1};
    ubigint quotient {0};
@@ -369,7 +366,7 @@ bool ubigint::operator< (const ubigint& that) const {
 ostream& operator<< (ostream& out, const ubigint& that) { 
    stringstream ss;
    if (that.ubig_value.size() != 0){
-      int count=0;
+      int count = 0;
       for (auto rev_itr = that.ubig_value.crbegin();
            rev_itr != that.ubig_value.crend(); ++rev_itr)
       {

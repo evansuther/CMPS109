@@ -49,15 +49,26 @@ bigint bigint::operator+ (const bigint& that) const {
       if(that.ubig_value < ubig_value){//this value > that value
          result.ubig_value = ubig_value - that.ubig_value;
          result.is_negative = is_negative;
-      }else{//this value < that value
+      }
+      else if(that.ubig_value == ubig_value){
+         result.ubig_value = ubig_value - that.ubig_value;
+         result.is_negative = false;
+      }
+      else{//this value < that value
          result.ubig_value = that.ubig_value - ubig_value;
          result.is_negative = that.is_negative;
       }
    }else{//that -, this +
       if(that.ubig_value < ubig_value){//this value > that value
+
          result.ubig_value = ubig_value - that.ubig_value;
          result.is_negative = is_negative;
-      }else{//this value < that value
+      }
+      else if(that.ubig_value == ubig_value){
+         result.ubig_value = ubig_value - that.ubig_value;
+         result.is_negative = false;
+      }
+      else{//this value < that value
          result.ubig_value = that.ubig_value - ubig_value;
          result.is_negative = that.is_negative;
       }
