@@ -35,28 +35,262 @@ ubigint::ubigint (unsigned char that) {
 }
 
 ubigint ubigint::operator+ (const ubigint& that) const {
-   ubigint result{that};
-   result.ubig_value.push_back(static_cast<unsigned char> ('0'));
+   ubigint result{};
+   int total;
+   int carry=0;
+   if(*this < that){
+      // loop to that size, dont want to hit null pointer with this size
+      for(unsigned int cnt = 0; cnt != that.ubig_value.size(); ++cnt){
+         // this ran out of digits
+         if (ubig_value.size() < cnt or ubig_value.size() == cnt){
+            total = (that.ubig_value.at(cnt)-'0') + carry;
+            result.ubig_value.push_back(total%10 +'0');
+            carry = total/10;
+
+         }
+         // this still has digits
+         else {
+            total = (ubig_value.at(cnt)-'0') +
+                     (that.ubig_value.at(cnt)-'0') + carry;
+            result.ubig_value.push_back(total%10 +'0');
+            carry = total/10;
+         }
+      }
+      // out of loop
+      if(carry != 0){
+         result.ubig_value.push_back(carry+'0');
+      }
+      DEBUGF ('o', "carry " << carry <<" total" << total
+                   << " that size "<< that.ubig_value.size() );
+   }
+   // mirrored this --> that
+   else{
+      for (unsigned int cnt = 0; cnt != ubig_value.size(); cnt++){
+         if (that.ubig_value.size() < cnt 
+                                 or that.ubig_value.size() == cnt){
+            total = (ubig_value.at(cnt)-'0') + carry;
+            result.ubig_value.push_back(total%10 +'0');
+            carry = total/10;
+         }else {
+            total = (ubig_value.at(cnt)-'0') +
+                     (that.ubig_value.at(cnt)-'0') + carry;
+            result.ubig_value.push_back(total%10 +'0');
+            carry = total/10;
+         }
+         /*if(carry!=0 and ubig_value.size() == cnt){
+            result.ubig_value.push_back(carry);
+         }*/
+         
+      }
+      if(carry != 0){
+         result.ubig_value.push_back(carry+'0');
+      }
+      DEBUGF ('o', "carry " << carry <<" total" << total
+                  << " this size "<< ubig_value.size()  );
+      
+   }
+   //result.ubig_value.push_back(static_cast<unsigned char> ('0'));
    return result;
 }
 
 ubigint ubigint::operator- (const ubigint& that) const {
    if (*this < that) throw domain_error ("ubigint::operator-(a<b)");
-   return *this;
-}
+   ubigint result{};
+   int total;
+   int carry=0;
+   for(unsigned int cnt = 0; cnt != ubig_value.size(); ++cnt){
+      //null ptr check
+      // this is always > than that
+      if (that.ubig_value.size() <= cnt){
+         total = (ubig_value.at(cnt)-'0')  + carry;
+         if(total<0){
+            carry = -1;
+            total = total + 10;
+            result.ubig_value.push_back(total +'0');
+         }else{
+            carry = 0;
+            result.ubig_value.push_back(total +'0');
+         }
 
-ubigint ubigint::operator* (const ubigint& that) const {
-   ubigint result{that};
-   result.ubig_value.push_back(static_cast<unsigned char> ('0'));
-   return *this;
+      }
+      //that still has digits
+      else{
+         total = (ubig_value.at(cnt)-'0') -
+                     (that.ubig_value.at(cnt)-'0') + carry;
+         if(total<0){
+            carry = -1;
+            total = total + 10;
+            result.ubig_value.push_back(total +'0');
+         }else{
+            carry = 0;
+            result.ubig_value.push_back(total +'0');
+         }
+      }
+      DEBUGF ('h', "carry " << carry <<" total" << total
+                  << " this size "<< ubig_value.size() 
+                  << " this cnt " << cnt <<
+                  " that size" << that.ubig_value.size()
+                  << "rubig_value.at(cnt)" << result.ubig_value.at(cnt)
+                  );
+   }
+   // normalizing zeros
+   while (result.ubig_value.size() > 0 and
+          result.ubig_value.back() == 0) result.ubig_value.pop_back();
+   return result;
 }
 
 void ubigint::multiply_by_2() {
+   ubigint tmp{*this};
+   *this = tmp + tmp;
    return;
 }
 
+// problems
 void ubigint::divide_by_2() {
+   int tmp;
+   // size returns |elem(vect)|
+   for(unsigned int cnt = 0; cnt <= ubig_value.size(); ++cnt){
+      // able to do evencheck
+      if(cnt < ubig_value.size()-1){
+         DEBUGF('m', "this is big_value.at(cnt+1): " <<
+                     ubig_value.at(cnt+1) <<
+                     " this is big_value.at(cnt): " <<
+                     ubig_value.at(cnt) << " cnt: " <<
+                     cnt << " this is ubig_value: " <<
+                     *this);
+
+         int even_check = ((ubig_value.at(cnt+1) - '0')%2);
+         DEBUGF ('m', " div_by_2, even check:"<< 
+                     (even_check)
+                     << " cnt: " << cnt);
+
+         if(even_check == 0){//next num even
+            DEBUGF ('m', " even val check: "<< 
+                     (ubig_value.at(cnt))
+                     << " cnt " << cnt);
+
+            tmp = ubig_value.at(cnt) -'0';
+            DEBUGF ('m', " tmp - 0: "<< 
+                     tmp
+                     << " cnt: " << cnt);
+
+            tmp = tmp/2;
+            DEBUGF ('m', " tmp/2: "<< 
+                     tmp
+                     << " cnt: " << cnt);
+
+            ubig_value.at(cnt)= tmp+'0';
+            DEBUGF ('m', " even check 2: this is ubig_value "<< 
+                     ubig_value.at(cnt)
+                     << " cnt " << cnt);
+
+         }else{//next num odd
+            DEBUGF ('m', " odd val check "<< 
+                     (ubig_value.at(cnt))
+                     << " cnt " << cnt);
+
+            tmp = ubig_value.at(cnt) - '0';
+            DEBUGF ('m', " tmp - 0: "<< 
+                     tmp
+                     << " cnt: " << cnt);
+
+            tmp = (tmp/2)+5;
+            DEBUGF ('m', " tmp / 2 + 5: "<< 
+                     tmp
+                     << " cnt: " << cnt);
+
+            ubig_value.at(cnt)= tmp+'0';
+            DEBUGF ('m', " odd check 2: this is ubig_value "<< 
+                     ubig_value.at(cnt)
+                     << " cnt " << cnt);
+
+         }
+      }
+      //ensure that we divide last number without checking null space
+      else if(cnt == ubig_value.size()-1){
+         tmp = ubig_value.at(cnt) -'0';
+         tmp = tmp/2;
+         ubig_value.at(cnt)= tmp + '0';
+      }
+      DEBUGF('m', "this end loop:"<< *this << " cnt: " << cnt);
+   }
+   // normalizer
+   while (ubig_value.size() > 0 and
+          ubig_value.back() == 0) ubig_value.pop_back();
+   DEBUGF('m', "passed in value" << *this);
    return;
+}
+
+ubigint ubigint::operator* (const ubigint& that) const {
+   ubigint result{};
+   ubigint power_of_2{};
+   ubigint tmp_that{};
+   ubigint tmp_this{};
+   tmp_that = that;
+   tmp_this = *this;
+   ubigint zero{};
+   power_of_2.ubig_value.push_back('1');
+   if (*this < that){//that > this
+      while (power_of_2 < that){
+         power_of_2.multiply_by_2();
+         tmp_this.multiply_by_2();
+      }
+      power_of_2.divide_by_2();
+      tmp_this.divide_by_2();
+      DEBUGF ('n', " before loop: power_of_2: "<< power_of_2 <<
+                   " tmp.this: "<< tmp_this << 
+                   " tmp.that: "<< tmp_that);
+
+      
+      while(not(tmp_that == zero)){
+         DEBUGF ('n', " that>this; power_of_2: "<< power_of_2 <<
+                        " tmp_that; "<< tmp_that <<
+                        " tmp_this; "<< tmp_this <<
+                        " result; "<< result);
+         if (power_of_2 < tmp_that or power_of_2 == tmp_that){
+
+            result = result + tmp_this;
+            tmp_that = tmp_that - power_of_2; //domain error currently
+            power_of_2.divide_by_2();
+            tmp_this.divide_by_2();
+         }else{
+            power_of_2.divide_by_2();
+            tmp_this.divide_by_2();
+         }
+         
+      }
+      
+   }else{//that < this
+      while (power_of_2 < *this){
+         power_of_2.multiply_by_2();
+         tmp_that.multiply_by_2();
+      }
+      power_of_2.divide_by_2();
+      tmp_that.divide_by_2();
+      DEBUGF ('n', " before loop2: power_of_2: "<< power_of_2 <<
+                   " tmp.this: "<< tmp_this << 
+                   " tmp.that: "<< tmp_that);
+      while(not(tmp_this == zero)){
+         DEBUGF ('n', " that<this; power_of_2: "<< power_of_2 <<
+                        " tmp_that; "<< tmp_that <<
+                        " tmp_this; "<< tmp_this <<
+                        " result; "<< result);
+         if (power_of_2 < tmp_this or power_of_2 == tmp_this){
+            result = result + tmp_that;
+            tmp_this = tmp_this - power_of_2;
+            power_of_2.divide_by_2();
+            tmp_that.divide_by_2();
+         }else{
+            power_of_2.divide_by_2();
+            tmp_that.divide_by_2();
+         }
+
+      }
+   }
+   
+
+
+   return result;
 }
 
 
@@ -64,7 +298,7 @@ void ubigint::divide_by_2() {
 struct quo_rem { ubigint quotient; ubigint remainder; };
 quo_rem udivide (const ubigint& dividend, ubigint divisor) {
    // Note: divisor is modified so pass by value (copy).
-   ubigint zero {0};
+   ubigint zero {"0"};
    if (divisor == zero) throw domain_error ("udivide by zero");
    ubigint power_of_2 {1};
    ubigint quotient {0};
@@ -125,18 +359,29 @@ bool ubigint::operator< (const ubigint& that) const {
          if (*L_itr != *R_itr) {
             return *L_itr < *R_itr;
          }
+         ++L_itr;
+         ++R_itr;
       }
-      return true;
+      return false;
    }
 }
 
 ostream& operator<< (ostream& out, const ubigint& that) { 
    stringstream ss;
-   
-   for (auto rev_itr = that.ubig_value.crbegin();
-        rev_itr != that.ubig_value.crend(); ++rev_itr){
-      ss << *rev_itr;
+   if (that.ubig_value.size() != 0){
+      int count=0;
+      for (auto rev_itr = that.ubig_value.crbegin();
+           rev_itr != that.ubig_value.crend(); ++rev_itr)
+      {
+          ++count;
+          if(count %70==0){
+             ss << '\\';
+             ss << '\n';
+         }
+        ss << *rev_itr;
+      }
+   } else {
+      ss << '0';
    }
-   return out << "ubigint(" << ss.rdbuf() << ")";
+   return out << ss.rdbuf();
 }
-

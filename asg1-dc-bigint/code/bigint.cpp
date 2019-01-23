@@ -26,7 +26,6 @@ bigint::bigint (const ubigint& uvalue, bool is_negative):
 bigint::bigint (const string& that) {
    is_negative = that.size() > 0 and that[0] == '_';
    ubig_value = ubigint (that.substr (is_negative ? 1 : 0));
-   //ubig_value = ubigint (that.substr (is_negative ? 1 : 0));
 }
 
 bigint bigint::operator+ () const {
@@ -35,22 +34,87 @@ bigint bigint::operator+ () const {
 }
 
 bigint bigint::operator- () const {
-   bigint result{this->ubig_value, this->is_negative};
+   bigint result{this->ubig_value, not is_negative};
    return result;
 }
 
 bigint bigint::operator+ (const bigint& that) const {
-   bigint result = that;
+   bigint result;
+   if(is_negative == that.is_negative){//same sign 
+      result.is_negative = is_negative;
+      ubigint sum = ubig_value + that.ubig_value;
+      result.ubig_value = sum;
+   }//else if is new************************
+   else if(is_negative){//this -, that +
+      if(that.ubig_value < ubig_value){//this value > that value
+         result.ubig_value = ubig_value - that.ubig_value;
+         result.is_negative = is_negative;
+      }else{//this value < that value
+         result.ubig_value = that.ubig_value - ubig_value;
+         result.is_negative = that.is_negative;
+      }
+   }else{//that -, this +
+      if(that.ubig_value < ubig_value){//this value > that value
+         result.ubig_value = ubig_value - that.ubig_value;
+         result.is_negative = is_negative;
+      }else{//this value < that value
+         result.ubig_value = that.ubig_value - ubig_value;
+         result.is_negative = that.is_negative;
+      }
+   }
    return result;
 }
 
 bigint bigint::operator- (const bigint& that) const {
-   bigint result = that;
-   return result;
+   bigint result{};
+   if(is_negative == that.is_negative){//same sign
+      if(is_negative){//NEG
+         if(ubig_value < that.ubig_value){//that bigger
+            result.ubig_value = that.ubig_value - ubig_value;
+            result.is_negative = false;
+         }else{//this bigger
+            result.ubig_value = ubig_value - that. ubig_value;
+            result.is_negative = true;
+         }
+      }else{//POS
+         DEBUGF ('h', "1is_negative " << is_negative 
+                  << " that.is_negative "
+                  << that.is_negative);
+         if(ubig_value < that.ubig_value){//that bigger
+            result.ubig_value = that.ubig_value - ubig_value;
+            result.is_negative = true;
+         }else{//this bigger
+            DEBUGF ('h', "2is_negative " << is_negative 
+                  << " that.is_negative "
+                  << that.is_negative);
+            result.ubig_value = ubig_value - that. ubig_value;
+            result.is_negative = false;
+         }
+      }
+   }else if(is_negative){//this - , that +
+      if(ubig_value < that.ubig_value){//that > this
+         result.ubig_value = that.ubig_value + ubig_value;
+         result.is_negative = false;
+      }else{//this>that
+         result.ubig_value = that.ubig_value + ubig_value;
+         result.is_negative = true;
+      }
+   }else{//this + , that -
+      result.ubig_value = that.ubig_value + ubig_value;
+      result.is_negative = is_negative;
+   }
+
+  return result;
 }
 
 bigint bigint::operator* (const bigint& that) const {
-   bigint result = that;
+   bigint result{};
+   if(is_negative == that.is_negative){
+      result.is_negative = false;
+   }else{
+      result.is_negative = true;
+   }
+   result.ubig_value = ubig_value * that.ubig_value;
    return result;
 }
 
@@ -76,7 +140,8 @@ bool bigint::operator< (const bigint& that) const {
 }
 
 ostream& operator<< (ostream& out, const bigint& that) {
-   return out << "bigint(" << (that.is_negative ? "-" : "+")
-              << "," << that.ubig_value << ")";
+   return out << (that.is_negative ? "-" : "")
+              << that.ubig_value;
 }
+
 
