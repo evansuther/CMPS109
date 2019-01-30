@@ -37,6 +37,15 @@ inode_state::inode_state() {
 
 const string& inode_state::prompt() const { return prompt_; }
 
+void inode_state::prompt(const wordvec& words){
+   string pr;
+   for(size_t i = 1; i != words.size(); ++i){
+      pr = pr + words.at(i) + (i != words.size() - 1? " ": "");
+   }
+   pr = pr + " "; 
+   prompt_ = pr;
+}
+
 ostream& operator<< (ostream& out, const inode_state& state) {
    out << "inode_state: root = " << state.root
        << ", cwd = " << state.cwd;
