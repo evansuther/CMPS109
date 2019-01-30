@@ -1,5 +1,8 @@
 // $Id: debug.cpp,v 1.10 2018-01-25 14:05:16-08 - - $
-
+/*
+ * Partner: Evan Suther (esuther@ucsc.edu)
+ * Partner: Derrick DeBose (ddebose@ucsc.edu)
+ */
 #include <climits>
 #include <iostream>
 #include <vector>

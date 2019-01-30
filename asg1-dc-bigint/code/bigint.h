@@ -1,5 +1,8 @@
 // $Id: bigint.h,v 1.29 2016-03-24 19:30:57-07 - - $
-
+/*
+ * Partner: Evan Suther (esuther@ucsc.edu)
+ * Partner: Derrick DeBose (ddebose@ucsc.edu)
+ */
 #ifndef __BIGINT_H__
 #define __BIGINT_H__
 

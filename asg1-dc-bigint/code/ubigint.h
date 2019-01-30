@@ -1,4 +1,8 @@
 // $Id: ubigint.h,v 1.11 2016-03-24 19:43:57-07 - - $
+/*
+ * Partner: Evan Suther (esuther@ucsc.edu)
+ * Partner: Derrick DeBose (ddebose@ucsc.edu)
+ */
 
 #ifndef __UBIGINT_H__
 #define __UBIGINT_H__

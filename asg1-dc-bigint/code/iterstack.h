@@ -17,7 +17,10 @@
 // Any underlying container which supports the necessary operations
 // could be used, such as vector, list, or deque.
 // 
-
+/*
+ * Partner: Evan Suther (esuther@ucsc.edu)
+ * Partner: Derrick DeBose (ddebose@ucsc.edu)
+ */
 #ifndef __ITERSTACK_H__
 #define __ITERSTACK_H__
 

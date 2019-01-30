@@ -1,5 +1,8 @@
 // $Id: main.cpp,v 1.55 2019-01-17 18:04:58-08 - - $
-
+/*
+ * Partner: Evan Suther (esuther@ucsc.edu)
+ * Partner: Derrick DeBose (ddebose@ucsc.edu)
+ */
 #include <cassert>
 #include <deque>
 #include <iostream>

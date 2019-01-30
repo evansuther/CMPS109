@@ -1,5 +1,7 @@
 # $Id: Makefile,v 1.35 2019-01-17 18:04:58-08 - - $
-
+ # Partner: Evan Suther (esuther@ucsc.edu)
+ # Partner: Derrick DeBose (ddebose@ucsc.edu)
+ 
 MKFILE      = Makefile
 DEPFILE     = ${MKFILE}.dep
 NOINCL      = ci clean spotless

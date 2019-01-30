@@ -1,5 +1,8 @@
 // $Id: bigint.cpp,v 1.76 2016-06-14 16:34:24-07 - - $
-
+/*
+ * Partner: Evan Suther (esuther@ucsc.edu)
+ * Partner: Derrick DeBose (ddebose@ucsc.edu)
+ */
 #include <cstdlib>
 #include <exception>
 #include <stack>

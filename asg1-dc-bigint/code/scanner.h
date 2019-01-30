@@ -1,5 +1,8 @@
 // $Id: scanner.h,v 1.12 2016-06-23 17:22:50-07 - - $
-
+/*
+ * Partner: Evan Suther (esuther@ucsc.edu)
+ * Partner: Derrick DeBose (ddebose@ucsc.edu)
+ */
 #ifndef __SCANNER_H__
 #define __SCANNER_H__
 

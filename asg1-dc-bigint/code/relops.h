@@ -1,5 +1,8 @@
 // $Id: relops.h,v 1.2 2016-06-13 13:47:33-07 - - $
-
+/*
+ * Partner: Evan Suther (esuther@ucsc.edu)
+ * Partner: Derrick DeBose (ddebose@ucsc.edu)
+ */
 //
 // Assuming that for any given type T, there are operators
 // bool operator< (const T&, const T&);

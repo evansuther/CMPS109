@@ -1,5 +1,8 @@
 // $Id: libfns.cpp,v 1.4 2015-07-03 14:46:41-07 - - $
-
+/*
+ * Partner: Evan Suther (esuther@ucsc.edu)
+ * Partner: Derrick DeBose (ddebose@ucsc.edu)
+ */
 #include "libfns.h"
 
 //

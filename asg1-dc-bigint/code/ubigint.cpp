@@ -1,4 +1,8 @@
 // $Id: ubigint.cpp,v 1.14 2016-06-23 17:21:26-07 - - $
+/*
+ * Partner: Evan Suther (esuther@ucsc.edu)
+ * Partner: Derrick DeBose (ddebose@ucsc.edu)
+ */
 
 #include <cctype>
 #include <cstdlib>
@@ -237,17 +241,18 @@ ubigint ubigint::operator* (const ubigint& that) const {
       DEBUGF ('n', " before loop: power_of_2: "<< power_of_2 <<
                    " tmp.this: "<< tmp_this << 
                    " tmp.that: "<< tmp_that);
-
-      
-      while(not(tmp_that == zero)){
+      while(not(tmp_that == zero )){
          DEBUGF ('n', " that>this; power_of_2: "<< power_of_2 <<
                         " tmp_that; "<< tmp_that <<
                         " tmp_this; "<< tmp_this <<
                         " result; "<< result);
          if (power_of_2 < tmp_that or power_of_2 == tmp_that){
-
+            DEBUGF ('n', " tmp_that; "<< tmp_that <<
+                         " tmp_this; "<< tmp_this <<
+                         " result; "<< result);
             result = result + tmp_this;
-            tmp_that = tmp_that - power_of_2; //domain error currently
+            
+            tmp_that = tmp_that - power_of_2;
             power_of_2.divide_by_2();
             tmp_this.divide_by_2();
          }else{
@@ -270,10 +275,10 @@ ubigint ubigint::operator* (const ubigint& that) const {
       while(not(tmp_this == zero)){
          DEBUGF ('n', " that<this; power_of_2: "<< power_of_2 <<
                         " tmp_that; "<< tmp_that <<
-                        " tmp_this; "<< tmp_this <<
-                        " result; "<< result);
+                        " tmp_this; "<< tmp_this);
          if (power_of_2 < tmp_this or power_of_2 == tmp_this){
             result = result + tmp_that;
+            DEBUGF ('n', " that<this in if; result: "<< result);
             tmp_this = tmp_this - power_of_2;
             power_of_2.divide_by_2();
             tmp_that.divide_by_2();
@@ -366,7 +371,7 @@ bool ubigint::operator< (const ubigint& that) const {
 ostream& operator<< (ostream& out, const ubigint& that) { 
    stringstream ss;
    if (that.ubig_value.size() != 0){
-      int count = 0;
+      int count=0;
       for (auto rev_itr = that.ubig_value.crbegin();
            rev_itr != that.ubig_value.crend(); ++rev_itr)
       {
@@ -374,6 +379,7 @@ ostream& operator<< (ostream& out, const ubigint& that) {
           if(count %70==0){
              ss << '\\';
              ss << '\n';
+             count=1;
          }
         ss << *rev_itr;
       }
