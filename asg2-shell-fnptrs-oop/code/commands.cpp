@@ -59,6 +59,15 @@ void fn_echo (inode_state& state, const wordvec& words){
 void fn_exit (inode_state& state, const wordvec& words){
    DEBUGF ('c', state);
    DEBUGF ('c', words);
+   int ex_st = 0;
+   if (words.size() != 1){
+      DEBUGF ('e', "in if")
+      ex_st = atoi(words.at(1).c_str());
+      // non-numeric argument
+      if (ex_st == 0 && words.at(1).at(0) != '0')
+         ex_st = 127;
+   }
+   exit_status::set(ex_st);
    throw ysh_exit();
 }
 
@@ -91,6 +100,7 @@ void fn_prompt (inode_state& state, const wordvec& words){
 void fn_pwd (inode_state& state, const wordvec& words){
    DEBUGF ('c', state);
    DEBUGF ('c', words);
+   cout << (state._rt_() == state._wd_() ? "/" : "??") << endl;
 }
 
 void fn_rm (inode_state& state, const wordvec& words){
