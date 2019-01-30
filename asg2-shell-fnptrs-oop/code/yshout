@@ -1,0 +1,38 @@
+yshell build Jan 29 2019 19:23:57
+yshell: DEBUG(u) util.cpp[37] 
+   bool want_echo()
+yshell: DEBUG(i) file_sys.cpp[30] 
+   inode_state::inode_state()
+% prompt
+yshell: DEBUG(u) util.cpp[54] 
+   wordvec split(const string&, const string&)
+yshell: DEBUG(y) main.cpp[70] 
+   int main(int, char**)
+yshell: DEBUG(c) commands.cpp[24] 
+   void (* find_command_fn(const string&))(inode_state&, const wordvec&)
+yshell: DEBUG(c) commands.cpp[86] 
+   void fn_prompt(inode_state&, const wordvec&)
+yshell: DEBUG(c) commands.cpp[87] 
+   void fn_prompt(inode_state&, const wordvec&)
+% ass
+yshell: DEBUG(u) util.cpp[54] 
+   wordvec split(const string&, const string&)
+yshell: DEBUG(y) main.cpp[70] 
+   int main(int, char**)
+yshell: DEBUG(c) commands.cpp[24] 
+   void (* find_command_fn(const string&))(inode_state&, const wordvec&)
+% make
+yshell: DEBUG(u) util.cpp[54] 
+   wordvec split(const string&, const string&)
+yshell: DEBUG(y) main.cpp[70] 
+   int main(int, char**)
+yshell: DEBUG(c) commands.cpp[24] 
+   void (* find_command_fn(const string&))(inode_state&, const wordvec&)
+yshell: DEBUG(c) commands.cpp[76] 
+   void fn_make(inode_state&, const wordvec&)
+yshell: DEBUG(c) commands.cpp[77] 
+   void fn_make(inode_state&, const wordvec&)
+% ^D
+yshell: DEBUG(y) main.cpp[62] 
+   int main(int, char**)
+yshell: exit(1)
