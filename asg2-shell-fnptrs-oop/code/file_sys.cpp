@@ -68,6 +68,10 @@ int inode::get_inode_nr() const {
    return inode_nr;
 }
 
+base_file_ptr inode::get_contents(){
+   return contents;
+}
+
 void inode::mkdir(const string& dirname){
    contents->mkdir(dirname);
    return;
@@ -102,6 +106,10 @@ inode_ptr plain_file::mkdir (const string&) {
 }
 
 inode_ptr plain_file::mkfile (const string&) {
+   throw file_error ("is a plain file");
+}
+
+void plain_file::set_parent(inode_ptr){
    throw file_error ("is a plain file");
 }
 
@@ -147,10 +155,16 @@ inode_ptr directory::mkdir (const string& dirname) {
    // putting subdir into this dir's map
    inode_ptr t = make_shared<inode>(file_type::DIRECTORY_TYPE);
    dirents.emplace(dirname, t);
-   auto i = t.dirents.find("..");
-   if (i == t->dirents.end()) {DEBUGF('d', "oops" << endl);}
-   else i->second = *this;
-   return nullptr;
+   //shared_ptr<inode_ptr> p this;
+   //t->get_contents()->set_parent(shared_from_this());
+   return t;
+}
+void directory::set_parent(inode_ptr parent){
+   DEBUGF('d', "parent = " << parent << endl);
+   auto i = dirents.find("..");
+   if (i == dirents.end()) {DEBUGF('d', "oops" << endl);}
+   else i->second = parent;
+   DEBUGF('d', "i -> second = " << i->second << endl);
 }
 
 inode_ptr directory::mkfile (const string& filename) {

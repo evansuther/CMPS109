@@ -90,7 +90,8 @@ void fn_mkdir (inode_state& state, const wordvec& words){
    DEBUGF ('c', state);
    DEBUGF ('c', words);
    inode_ptr wd = state._wd_();
-   wd->mkdir(words.at(1));
+   inode_ptr sd = wd->get_contents()->mkdir(words.at(1));
+   sd->get_contents()->set_parent(wd);
 }
 
 void fn_prompt (inode_state& state, const wordvec& words){

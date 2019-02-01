@@ -70,6 +70,7 @@ class inode {
    public:
       inode (file_type);
       int get_inode_nr() const;
+      base_file_ptr get_contents();
       void mkdir(const string&);
 };
 
@@ -84,7 +85,7 @@ class file_error: public runtime_error {
       explicit file_error (const string& what);
 };
 
-class base_file {
+class base_file:  public std::enable_shared_from_this<base_file>{
    protected:
       base_file() = default;
    public:
@@ -97,6 +98,7 @@ class base_file {
       virtual void remove (const string& filename) = 0;
       virtual inode_ptr mkdir (const string& dirname) = 0;
       virtual inode_ptr mkfile (const string& filename) = 0;
+      virtual void set_parent(inode_ptr parent) = 0;
 };
 
 // class plain_file -
@@ -118,6 +120,7 @@ class plain_file: public base_file {
       virtual void remove (const string& filename) override;
       virtual inode_ptr mkdir (const string& dirname) override;
       virtual inode_ptr mkfile (const string& filename) override;
+      virtual void set_parent(inode_ptr parent) override;
 };
 
 // class directory -
@@ -144,13 +147,14 @@ class directory: public base_file {
       map<string,inode_ptr> dirents;
    public:
       directory();
-      directory(const inode_ptr);
+      directory(const inode_ptr); 
       virtual size_t size() const override;
       virtual const wordvec& readfile() const override;
       virtual void writefile (const wordvec& newdata) override;
       virtual void remove (const string& filename) override;
       virtual inode_ptr mkdir (const string& dirname) override;
       virtual inode_ptr mkfile (const string& filename) override;
+      virtual void set_parent(inode_ptr parent) override;
 };
 
 #endif
