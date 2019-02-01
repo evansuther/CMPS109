@@ -186,6 +186,7 @@ void directory::set_parent(inode_ptr parent){
    DEBUGF('d', "i -> second = " << i->second << endl);
 }
 
+// helper fn to get pointer to an inode given a string
 inode_ptr directory::find(const string& path){
    auto i = dirents.find(path);
    if (i == dirents.end()) {
