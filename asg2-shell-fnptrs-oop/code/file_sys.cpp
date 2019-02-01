@@ -84,6 +84,16 @@ file_error::file_error (const string& what):
 
 size_t plain_file::size() const {
    size_t size {0};
+   size_t c {1};
+   for(auto str: data){
+      // size of a file is char/byte count
+      size = size + str.size();
+      // count spaces
+      if (c != data.size()) {
+         ++size;
+         ++c;
+      }
+   }
    DEBUGF ('i', "size = " << size);
    return size;
 }
@@ -95,6 +105,11 @@ const wordvec& plain_file::readfile() const {
 
 void plain_file::writefile (const wordvec& words) {
    DEBUGF ('i', words);
+   for(size_t i = 2; i != words.size(); ++i){
+      DEBUGF('d', "pushing " << words.at(i) << " to data" << endl);
+      data.push_back(words.at(i));
+   }
+   DEBUGF('d', "size of file = " << size());
 }
 
 void plain_file::remove (const string&) {
@@ -113,6 +128,9 @@ void plain_file::set_parent(inode_ptr){
    throw file_error ("is a plain file");
 }
 
+inode_ptr plain_file::find(const string&){
+    throw file_error ("is a plain file");
+}
 
 directory::directory(){
    dirents.emplace(".", nullptr);
@@ -127,8 +145,8 @@ directory::directory(const inode_ptr parent){
    dirents.emplace(".", nullptr);
    dirents.emplace("..", parent);
    for(auto it: dirents){
-      DEBUGF('d', "map it.first:" << it.first
-       << " map it.second:" << it.second<< endl);
+      DEBUGF('d', "map it.first: " << it.first
+       << " map it.second: " << it.second<< endl);
    }
 }
 
@@ -152,23 +170,38 @@ void directory::remove (const string& filename) {
 
 inode_ptr directory::mkdir (const string& dirname) {
    DEBUGF ('i', dirname);
-   // putting subdir into this dir's map
+   // use default directory ctor
    inode_ptr t = make_shared<inode>(file_type::DIRECTORY_TYPE);
+   // putting subdir into this dir's map
    dirents.emplace(dirname, t);
-   //shared_ptr<inode_ptr> p this;
-   //t->get_contents()->set_parent(shared_from_this());
    return t;
 }
+
 void directory::set_parent(inode_ptr parent){
    DEBUGF('d', "parent = " << parent << endl);
    auto i = dirents.find("..");
+   // should always be here
    if (i == dirents.end()) {DEBUGF('d', "oops" << endl);}
    else i->second = parent;
    DEBUGF('d', "i -> second = " << i->second << endl);
 }
 
+inode_ptr directory::find(const string& path){
+   auto i = dirents.find(path);
+   if (i == dirents.end()) {
+      DEBUGF('d', "oops" << endl);
+      throw file_error ("not a file");
+   }
+   else 
+      return i->second;
+}
+
 inode_ptr directory::mkfile (const string& filename) {
    DEBUGF ('i', filename);
-   return nullptr;
+   inode_ptr t = make_shared<inode>(file_type::PLAIN_TYPE);
+   // putting subdir into this dir's map
+   dirents.emplace(filename, t);
+   DEBUGF('d', "address of new plain_file = " << t << endl);
+   return t;
 }
 

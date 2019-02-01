@@ -42,11 +42,17 @@ int exit_status_message() {
 void fn_cat (inode_state& state, const wordvec& words){
    DEBUGF ('c', state);
    DEBUGF ('c', words);
+   if(words.size() <= 1) {
+      throw command_error("cat: no file specified");
+   }
+   inode_ptr f = state._wd_()->get_contents()->find(words.at(1));
+   cout << f->get_contents()->readfile() << endl;
 }
 
 void fn_cd (inode_state& state, const wordvec& words){
    DEBUGF ('c', state);
    DEBUGF ('c', words);
+
 }
 
 void fn_echo (inode_state& state, const wordvec& words){
@@ -84,13 +90,21 @@ void fn_lsr (inode_state& state, const wordvec& words){
 void fn_make (inode_state& state, const wordvec& words){
    DEBUGF ('c', state);
    DEBUGF ('c', words);
+   // deal with paths ***********************************************
+   // pointer to empty file in directory
+   inode_ptr f = state._wd_()->get_contents()->mkfile(words.at(1));
+   // put the words into the file
+   f->get_contents()->writefile(words);
 }
 
 void fn_mkdir (inode_state& state, const wordvec& words){
    DEBUGF ('c', state);
    DEBUGF ('c', words);
+   // deal with paths ***********************************************
    inode_ptr wd = state._wd_();
+   // make default dir, add to wd's map
    inode_ptr sd = wd->get_contents()->mkdir(words.at(1));
+   // need to connect child to parent
    sd->get_contents()->set_parent(wd);
 }
 

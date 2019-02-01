@@ -69,6 +69,8 @@ int main (int argc, char** argv) {
             // function.  Complain or call it.
             wordvec words = split (line, " \t");
             DEBUGF ('y', "words = " << words);
+            // current test for comments, line.find() 
+            // might be more robust
             if (words.at(0) != "#"){
                command_fn fn = find_command_fn (words.at(0));
                fn (state, words);
@@ -76,6 +78,8 @@ int main (int argc, char** argv) {
          }catch (command_error& error) {
             // If there is a problem discovered in any function, an
             // exn is thrown and printed here.
+            complain() << error.what() << endl;
+         }catch (file_error& error){
             complain() << error.what() << endl;
          }
       }

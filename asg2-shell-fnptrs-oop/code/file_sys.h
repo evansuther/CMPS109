@@ -85,7 +85,7 @@ class file_error: public runtime_error {
       explicit file_error (const string& what);
 };
 
-class base_file:  public std::enable_shared_from_this<base_file>{
+class base_file{
    protected:
       base_file() = default;
    public:
@@ -99,6 +99,7 @@ class base_file:  public std::enable_shared_from_this<base_file>{
       virtual inode_ptr mkdir (const string& dirname) = 0;
       virtual inode_ptr mkfile (const string& filename) = 0;
       virtual void set_parent(inode_ptr parent) = 0;
+      virtual inode_ptr find(const string& path) = 0;
 };
 
 // class plain_file -
@@ -121,6 +122,7 @@ class plain_file: public base_file {
       virtual inode_ptr mkdir (const string& dirname) override;
       virtual inode_ptr mkfile (const string& filename) override;
       virtual void set_parent(inode_ptr parent) override;
+      virtual inode_ptr find(const string& path) override;
 };
 
 // class directory -
@@ -155,6 +157,7 @@ class directory: public base_file {
       virtual inode_ptr mkdir (const string& dirname) override;
       virtual inode_ptr mkfile (const string& filename) override;
       virtual void set_parent(inode_ptr parent) override;
+      virtual inode_ptr find(const string& path) override;
 };
 
 #endif
