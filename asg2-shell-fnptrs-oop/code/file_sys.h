@@ -70,6 +70,7 @@ class inode {
    public:
       inode (file_type);
       int get_inode_nr() const;
+      void mkdir(const string&);
 };
 
 
@@ -142,6 +143,8 @@ class directory: public base_file {
       // Must be a map, not unordered_map, so printing is lexicographic
       map<string,inode_ptr> dirents;
    public:
+      directory();
+      directory(const inode_ptr);
       virtual size_t size() const override;
       virtual const wordvec& readfile() const override;
       virtual void writefile (const wordvec& newdata) override;

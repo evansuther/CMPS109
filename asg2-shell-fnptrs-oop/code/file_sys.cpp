@@ -68,6 +68,11 @@ int inode::get_inode_nr() const {
    return inode_nr;
 }
 
+void inode::mkdir(const string& dirname){
+   contents->mkdir(dirname);
+   return;
+}
+
 
 file_error::file_error (const string& what):
             runtime_error (what) {
@@ -101,6 +106,24 @@ inode_ptr plain_file::mkfile (const string&) {
 }
 
 
+directory::directory(){
+   dirents.emplace(".", nullptr);
+   dirents.emplace("..", nullptr);
+   for(auto it: dirents){
+      DEBUGF('d', "map it.first:" << it.first
+       << " map it.second:" << it.second<< endl);
+   }
+}
+
+directory::directory(const inode_ptr parent){
+   dirents.emplace(".", nullptr);
+   dirents.emplace("..", parent);
+   for(auto it: dirents){
+      DEBUGF('d', "map it.first:" << it.first
+       << " map it.second:" << it.second<< endl);
+   }
+}
+
 size_t directory::size() const {
    size_t size {0};
    DEBUGF ('i', "size = " << size);
@@ -121,6 +144,12 @@ void directory::remove (const string& filename) {
 
 inode_ptr directory::mkdir (const string& dirname) {
    DEBUGF ('i', dirname);
+   // putting subdir into this dir's map
+   inode_ptr t = make_shared<inode>(file_type::DIRECTORY_TYPE);
+   dirents.emplace(dirname, t);
+   auto i = t.dirents.find("..");
+   if (i == t->dirents.end()) {DEBUGF('d', "oops" << endl);}
+   else i->second = *this;
    return nullptr;
 }
 

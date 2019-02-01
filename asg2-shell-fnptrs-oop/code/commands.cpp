@@ -61,7 +61,6 @@ void fn_exit (inode_state& state, const wordvec& words){
    DEBUGF ('c', words);
    int ex_st = 0;
    if (words.size() != 1){
-      DEBUGF ('e', "in if")
       ex_st = atoi(words.at(1).c_str());
       // non-numeric argument
       if (ex_st == 0 && words.at(1).at(0) != '0')
@@ -74,6 +73,7 @@ void fn_exit (inode_state& state, const wordvec& words){
 void fn_ls (inode_state& state, const wordvec& words){
    DEBUGF ('c', state);
    DEBUGF ('c', words);
+   // check if ls has operands(directories)
 }
 
 void fn_lsr (inode_state& state, const wordvec& words){
@@ -89,6 +89,8 @@ void fn_make (inode_state& state, const wordvec& words){
 void fn_mkdir (inode_state& state, const wordvec& words){
    DEBUGF ('c', state);
    DEBUGF ('c', words);
+   inode_ptr wd = state._wd_();
+   wd->mkdir(words.at(1));
 }
 
 void fn_prompt (inode_state& state, const wordvec& words){
