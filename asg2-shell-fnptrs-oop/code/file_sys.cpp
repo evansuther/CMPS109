@@ -17,11 +17,7 @@ struct file_type_hash {
    }
 };
 
-/*inode_ptr deal_with_path(inode_ptr wd, const string& path){
-   if (path == "/"){
 
-   }
-}*/
 
 ostream& operator<< (ostream& out, file_type type) {
    static unordered_map<file_type,string,file_type_hash> hash {
@@ -208,16 +204,6 @@ directory::directory(){
    }
    size_ = 2;
 }
-
-/*directory::directory(const inode_ptr parent){
-   dirents.emplace(".", nullptr);
-   dirents.emplace("..", parent);
-   for(auto it: dirents){
-      DEBUGF('d', "map it.first: " << it.first
-       << " map it.second: " << it.second<< endl);
-   }
-
-}*/
 
 size_t directory::size() const {
    DEBUGF ('i', "size = " << size_);
