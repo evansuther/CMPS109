@@ -1,4 +1,4 @@
-// $Id: main.cpp,v 1.1 2019-02-01 22:45:41-08 - - $
+// $Id: main.cpp,v 1.9 2016-01-14 16:16:52-08 - - $
 
 #include <cstdlib>
 #include <iostream>
@@ -61,6 +61,7 @@ int main (int argc, char** argv) {
                if (need_echo) cout << "^D";
                cout << endl;
                DEBUGF ('y', "EOF");
+               state._rt_()->disown();
                break;
             }
             if (need_echo) cout << line << endl;

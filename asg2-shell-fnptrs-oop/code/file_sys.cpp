@@ -85,6 +85,10 @@ void inode::mkdir(const string& dirname){
    return;
 }
 
+void inode::disown(){
+   contents->disown();
+}
+
 
 size_t num_digits (size_t);
 size_t num_digits (size_t size){
@@ -191,7 +195,9 @@ file_type plain_file::inode_type(){
    return file_type::PLAIN_TYPE;
 }
 
-
+void plain_file::disown(){
+   return;
+}
 
 directory::directory(){
    dirents.emplace(".", nullptr);
@@ -312,4 +318,13 @@ void directory::print(){
 
 file_type directory::inode_type(){
    return file_type::DIRECTORY_TYPE;
+}
+
+void directory::disown(){
+   for (auto itor: dirents){
+      if (itor.first != ".." and itor.first != ".")
+         itor.second->get_contents()->disown();
+   }
+   dirents.erase(".");
+   dirents.erase("..");
 }

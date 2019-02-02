@@ -76,6 +76,7 @@ class inode {
       void mkdir(const string&);
       void print_from();
       file_type inode_type();
+      void disown();
 };
 
 
@@ -107,6 +108,7 @@ class base_file{
       virtual inode_ptr find(const string& path) = 0;
       virtual void print() = 0;
       virtual file_type inode_type() = 0;
+      virtual void disown() = 0;
 };
 
 // class plain_file -
@@ -133,6 +135,7 @@ class plain_file: public base_file {
       virtual inode_ptr find(const string& path) override;
       virtual void print() override;
       virtual file_type inode_type() override;
+      virtual void disown() override;
 };
 
 // class directory -
@@ -172,6 +175,7 @@ class directory: public base_file {
       virtual inode_ptr find(const string& path) override;
       virtual void print() override;
       virtual file_type inode_type() override;
+      virtual void disown() override;
 };
 
 #endif
