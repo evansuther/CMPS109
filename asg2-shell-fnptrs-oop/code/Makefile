@@ -57,7 +57,7 @@ again :
 	${GMAKE} spotless dep ci all lis
 
 grind	:	${EXECBIN}
-	valgrind --leak-check=full ./${EXECBIN} <test2.ysh 1>grind.out 2>grind.err
+	valgrind --leak-check=full ./${EXECBIN} <testV.ysh 1>grind.out 2>grind.err
 
 ifeq (${NEEDINCL}, )
 include ${DEPFILE}

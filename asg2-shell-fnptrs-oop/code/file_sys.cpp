@@ -17,6 +17,12 @@ struct file_type_hash {
    }
 };
 
+/*inode_ptr deal_with_path(inode_ptr wd, const string& path){
+   if (path == "/"){
+
+   }
+}*/
+
 ostream& operator<< (ostream& out, file_type type) {
    static unordered_map<file_type,string,file_type_hash> hash {
       {file_type::PLAIN_TYPE, "PLAIN_TYPE"},
@@ -29,6 +35,8 @@ ostream& operator<< (ostream& out, file_type type) {
 inode_state::inode_state() {
    // root is shared ptr to a directory inode
    root = make_shared<inode>(file_type::DIRECTORY_TYPE );
+   root->get_contents()->set_parent(root);
+   root->get_contents()->set_dot(root);
    // cwd is init to root
    cwd = root;
    DEBUGF ('i', "root = " << root << ", cwd = " << cwd
@@ -75,6 +83,45 @@ base_file_ptr inode::get_contents(){
 void inode::mkdir(const string& dirname){
    contents->mkdir(dirname);
    return;
+}
+
+
+size_t num_digits (size_t);
+size_t num_digits (size_t size){
+   size_t num {0};
+   while(size) {
+      ++num;
+      size /= 10;
+   }
+   return num;
+}
+
+size_t num_digits (int);
+size_t num_digits (int size){
+   DEBUGF('p', "in num_digits(int)" << endl);
+   size_t num {0};
+   while(size) {
+      ++num;
+      size /= 10;
+   }
+   return num;
+}
+
+string _spaces(size_t);
+string _spaces(size_t size){
+   string spces = "";
+   for (size_t i = 1; i != 6 - size; ++i){
+      spces += " ";
+   }
+   return spces;
+}
+
+void inode::print_from(){
+   contents->print();
+}
+
+file_type inode::inode_type(){
+   return contents->inode_type();
 }
 
 
@@ -131,6 +178,20 @@ void plain_file::set_parent(inode_ptr){
 inode_ptr plain_file::find(const string&){
     throw file_error ("is a plain file");
 }
+
+void plain_file::print(){
+    throw file_error ("is a plain file");
+}
+
+void plain_file::set_dot(inode_ptr){
+   throw file_error ("is a plain file");
+}
+
+file_type plain_file::inode_type(){
+   return file_type::PLAIN_TYPE;
+}
+
+
 
 directory::directory(){
    dirents.emplace(".", nullptr);
@@ -139,21 +200,22 @@ directory::directory(){
       DEBUGF('d', "map it.first:" << it.first
        << " map it.second:" << it.second<< endl);
    }
+   size_ = 2;
 }
 
-directory::directory(const inode_ptr parent){
+/*directory::directory(const inode_ptr parent){
    dirents.emplace(".", nullptr);
    dirents.emplace("..", parent);
    for(auto it: dirents){
       DEBUGF('d', "map it.first: " << it.first
        << " map it.second: " << it.second<< endl);
    }
-}
+
+}*/
 
 size_t directory::size() const {
-   size_t size {0};
-   DEBUGF ('i', "size = " << size);
-   return size;
+   DEBUGF ('i', "size = " << size_);
+   return size_;
 }
 
 const wordvec& directory::readfile() const {
@@ -173,7 +235,15 @@ inode_ptr directory::mkdir (const string& dirname) {
    // use default directory ctor
    inode_ptr t = make_shared<inode>(file_type::DIRECTORY_TYPE);
    // putting subdir into this dir's map
+   auto map_itr = dirents.find(dirname);
+   // directory already exists
+   if (map_itr != dirents.end()){
+      throw file_error("mkdir: cannot create directory '" + 
+                        dirname + "': File exists");
+   }
    dirents.emplace(dirname, t);
+   ++size_;
+   DEBUGF('d', "size of working directory = " << size_ << endl);
    return t;
 }
 
@@ -183,6 +253,15 @@ void directory::set_parent(inode_ptr parent){
    // should always be here
    if (i == dirents.end()) {DEBUGF('d', "oops" << endl);}
    else i->second = parent;
+   DEBUGF('d', "i -> second = " << i->second << endl);
+}
+
+void directory::set_dot(inode_ptr self){
+   DEBUGF('d', "self = " << self << endl);
+   auto i = dirents.find(".");
+   // should always be here
+   if (i == dirents.end()) {DEBUGF('d', "oops" << endl);}
+   else i->second = self;
    DEBUGF('d', "i -> second = " << i->second << endl);
 }
 
@@ -203,6 +282,34 @@ inode_ptr directory::mkfile (const string& filename) {
    // putting subdir into this dir's map
    dirents.emplace(filename, t);
    DEBUGF('d', "address of new plain_file = " << t << endl);
+   ++size_;
    return t;
 }
 
+void directory::print(){
+   string spaces_nr, spaces_size, name;
+   size_t nr_digits;
+   DEBUGF('p', " made it to dir::print()" << endl);
+   for (auto itor: dirents){
+      DEBUGF('p', "made it into loop");
+      nr_digits = num_digits(itor.second->get_inode_nr());
+
+      DEBUGF('p', "made it past num_digits");
+      spaces_nr = _spaces(nr_digits);
+      DEBUGF('p', "made it past _spaces");
+      size_t tmp_size = itor.second->get_contents()->size();
+      size_t size_digits = num_digits(tmp_size);
+      spaces_size = _spaces(size_digits);
+      name = itor.first + 
+         ((itor.second->inode_type() ==file_type::DIRECTORY_TYPE) and
+          (itor.first != "." and itor.first != "..") ?
+            "/" : "");
+     
+      cout << spaces_nr << itor.second->get_inode_nr() << "  "
+         << spaces_size << tmp_size << "  " << name << endl;
+   }
+}
+
+file_type directory::inode_type(){
+   return file_type::DIRECTORY_TYPE;
+}

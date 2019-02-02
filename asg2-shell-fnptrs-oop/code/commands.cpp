@@ -76,9 +76,33 @@ void fn_exit (inode_state& state, const wordvec& words){
    throw ysh_exit();
 }
 
+/*size_t num_digits (size_t);
+size_t num_digits (size_t size){
+   size_t num {0};
+   while(size) {
+      ++num;
+      size /= 10;
+   }
+   return num;
+}
+string _spaces(size_t);
+string _spaces(size_t size){
+   string spces = "";
+   for (size_t i = 1; i != size - 6; ++i){
+      spces += " ";
+   }
+   return spces;
+}*/
+
 void fn_ls (inode_state& state, const wordvec& words){
    DEBUGF ('c', state);
    DEBUGF ('c', words);
+   
+   // no argument, use wd
+   if (words.size() == 1) {
+      cout << "/:" << endl;
+      state._wd_()->print_from();
+   }
    // check if ls has operands(directories)
 }
 
@@ -92,20 +116,24 @@ void fn_make (inode_state& state, const wordvec& words){
    DEBUGF ('c', words);
    // deal with paths ***********************************************
    // pointer to empty file in directory
-   inode_ptr f = state._wd_()->get_contents()->mkfile(words.at(1));
+   inode_ptr 
+      new_fle = state._wd_()->get_contents()->mkfile(words.at(1));
    // put the words into the file
-   f->get_contents()->writefile(words);
+   new_fle->get_contents()->writefile(words);
 }
+
+
 
 void fn_mkdir (inode_state& state, const wordvec& words){
    DEBUGF ('c', state);
    DEBUGF ('c', words);
    // deal with paths ***********************************************
-   inode_ptr wd = state._wd_();
+   inode_ptr working_dir = state._wd_();
    // make default dir, add to wd's map
-   inode_ptr sd = wd->get_contents()->mkdir(words.at(1));
+   inode_ptr new_dir = working_dir->get_contents()->mkdir(words.at(1));
    // need to connect child to parent
-   sd->get_contents()->set_parent(wd);
+   new_dir->get_contents()->set_parent(working_dir);
+   new_dir->get_contents()->set_dot(new_dir);
 }
 
 void fn_prompt (inode_state& state, const wordvec& words){

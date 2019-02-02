@@ -41,10 +41,12 @@ class inode_state {
       inode_state (const inode_state&) = delete; // copy ctor
       inode_state& operator= (const inode_state&) = delete; // op=
       inode_state();//default
-      // const on both sides bc member fn defined outside of class definition?
+      // const on both sides bc member
+      // fn defined outside of class definition?
       const string& prompt() const;
       void prompt(const wordvec&);
       inode_ptr _wd_() {return cwd;}
+
       inode_ptr _rt_() {return root;}
 };
 
@@ -72,6 +74,8 @@ class inode {
       int get_inode_nr() const;
       base_file_ptr get_contents();
       void mkdir(const string&);
+      void print_from();
+      file_type inode_type();
 };
 
 
@@ -99,7 +103,10 @@ class base_file{
       virtual inode_ptr mkdir (const string& dirname) = 0;
       virtual inode_ptr mkfile (const string& filename) = 0;
       virtual void set_parent(inode_ptr parent) = 0;
+      virtual void set_dot(inode_ptr) = 0;
       virtual inode_ptr find(const string& path) = 0;
+      virtual void print() = 0;
+      virtual file_type inode_type() = 0;
 };
 
 // class plain_file -
@@ -122,7 +129,10 @@ class plain_file: public base_file {
       virtual inode_ptr mkdir (const string& dirname) override;
       virtual inode_ptr mkfile (const string& filename) override;
       virtual void set_parent(inode_ptr parent) override;
+      virtual void set_dot(inode_ptr) override;
       virtual inode_ptr find(const string& path) override;
+      virtual void print() override;
+      virtual file_type inode_type() override;
 };
 
 // class directory -
@@ -147,9 +157,10 @@ class directory: public base_file {
    private:
       // Must be a map, not unordered_map, so printing is lexicographic
       map<string,inode_ptr> dirents;
+      size_t size_;
    public:
       directory();
-      directory(const inode_ptr); 
+     // directory(const inode_ptr); 
       virtual size_t size() const override;
       virtual const wordvec& readfile() const override;
       virtual void writefile (const wordvec& newdata) override;
@@ -157,7 +168,10 @@ class directory: public base_file {
       virtual inode_ptr mkdir (const string& dirname) override;
       virtual inode_ptr mkfile (const string& filename) override;
       virtual void set_parent(inode_ptr parent) override;
+      virtual void set_dot(inode_ptr) override;
       virtual inode_ptr find(const string& path) override;
+      virtual void print() override;
+      virtual file_type inode_type() override;
 };
 
 #endif
