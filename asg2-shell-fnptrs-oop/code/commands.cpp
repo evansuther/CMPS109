@@ -107,7 +107,6 @@ void fn_cat (inode_state& state, const wordvec& words){
       }
       
    }
-   cout << endl;
 }
 
 void fn_cd (inode_state& state, const wordvec& words){

@@ -49,6 +49,7 @@ class inode_state {
       inode_ptr _wd_() {return cwd;}
 
       inode_ptr _rt_() {return root;}
+      
 };
 
 // class inode -

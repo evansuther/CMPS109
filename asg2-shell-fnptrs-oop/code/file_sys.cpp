@@ -128,6 +128,16 @@ void inode::print_from(){
    contents->print();
 }
 
+/*void inode_state::print_from_rec(inode_ptr from){
+   string dirname = state._rt_()->get_contents()->find_name(from);
+   cout << "/" << dirname <<  ":" << endl;
+   contents->print();
+   vector<inode_ptr> subdirs = contents->get_subdirs();
+   for (inode_ptr inode_itor : subdirs){
+      print_from_rec(inode_itor);
+   }
+}*/
+
 file_type inode::inode_type(){
    return contents->inode_type();
 }
@@ -295,6 +305,7 @@ inode_ptr directory::mkfile (const string& filename) {
 }
 
 void directory::print(){
+   // ************PATHNAME**********:
    string spaces_nr, spaces_size, name;
    size_t nr_digits;
    for (auto itor: dirents){
@@ -313,6 +324,16 @@ void directory::print(){
          << spaces_size << tmp_size << "  " << name << endl;
    }
 }
+
+/*void directory::print_recursive(){
+   build_path();
+   print();
+   vector<inode_ptr> subdirs = get_subdirs();
+   for (auto inode_itor: subdirs){
+      inode_itor->get_contents()->print_recursive();
+
+   }
+}*/
 
 file_type directory::inode_type(){
    return file_type::DIRECTORY_TYPE;
