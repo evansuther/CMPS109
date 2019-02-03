@@ -49,7 +49,7 @@ class inode_state {
       inode_ptr _wd_() {return cwd;}
 
       inode_ptr _rt_() {return root;}
-      
+
 };
 
 // class inode -
@@ -113,6 +113,9 @@ class base_file{
       virtual void disown() = 0;
       virtual string find_name(inode_ptr) = 0 ;
       virtual vector<inode_ptr> get_subdirs() = 0;
+      virtual string build_path(inode_ptr) = 0;
+      virtual inode_ptr get_parent() = 0;
+      virtual void print_recursive() = 0;
 };
 
 // class plain_file -
@@ -142,6 +145,9 @@ class plain_file: public base_file {
       virtual void disown() override;
       virtual string find_name(inode_ptr) override;
       virtual vector<inode_ptr> get_subdirs() override;
+      virtual string build_path(inode_ptr) override;
+      virtual inode_ptr get_parent() override;
+      virtual void print_recursive() override;
 };
 
 // class directory -
@@ -184,6 +190,9 @@ class directory: public base_file {
       virtual void disown() override;
       virtual string find_name(inode_ptr) override;
       virtual vector<inode_ptr> get_subdirs() override;
+      virtual string build_path(inode_ptr) override;
+      virtual inode_ptr get_parent() override;
+      virtual void print_recursive() override;
 };
 
 #endif

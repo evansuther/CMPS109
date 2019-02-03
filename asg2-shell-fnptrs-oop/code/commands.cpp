@@ -161,7 +161,7 @@ void fn_ls (inode_state& state, const wordvec& words){
    if (words.size() == 1) {
       if (state._wd_() != state._rt_()){
          string dirname = 
-            state._rt_()->get_contents()->find_name(state._wd_());
+            state._rt_()->get_contents()->build_path(state._wd_());
          cout << "/" << dirname <<  ":" << endl;
       }
       else{
@@ -182,12 +182,8 @@ void fn_ls (inode_state& state, const wordvec& words){
                words.at(1) + ": No such file or directory");
       }
       else{
-         wordvec parts = split(words.at(1), "/");
-         vector<string>::const_iterator itor = words.end();
-         --itor;
-         string path = *itor;
          //do a more norm itor go to parts -1
-         cout << path <<":" << endl;
+         cout << words.at(1) <<":" << endl;
       }
 
    }
@@ -203,8 +199,9 @@ void fn_lsr (inode_state& state, const wordvec& words){
    vector<inode_ptr> subdirs;
    if (words.size() == 1) {
       if (state._wd_() != state._rt_()){
-         dirname = 
-            state._rt_()->get_contents()->find_name(state._wd_());
+         dirname = state._rt_()->get_contents()->build_path(
+            state._wd_());
+
       }
       else{
          //no args and at root
@@ -215,6 +212,7 @@ void fn_lsr (inode_state& state, const wordvec& words){
          state._wd_()->get_contents()->get_subdirs();
 
    }
+   //need to print from root
    else if (words.at(1)== "/"){
       dirname = "";
       final_path = state._rt_();
@@ -235,17 +233,23 @@ void fn_lsr (inode_state& state, const wordvec& words){
          //make an itor to go to parts -1
          vector<string>::const_iterator itor = words.end();
          --itor;
-         dirname = *itor;
+
+         dirname = words.at(1);
       }
 
    }
-   cout << "/" << dirname <<  ":" << endl;
+   if(dirname == ""){
+      cout << "/:" << endl;
+   }else{
+      cout << dirname <<  ":" << endl;
+   }
+   
    final_path->print_from();
 
    for(auto itor : subdirs){
-         dirname = state._rt_()->get_contents()->find_name(itor);
-         cout << "/" << dirname <<  ":" << endl;
-         itor->print_from();
+      dirname = itor->get_contents()->build_path(itor);
+      //cout << dirname <<  ":" << endl;
+      itor->get_contents()->print_recursive();
    }
 }
 
@@ -317,7 +321,8 @@ void fn_prompt (inode_state& state, const wordvec& words){
 void fn_pwd (inode_state& state, const wordvec& words){
    DEBUGF ('c', state);
    DEBUGF ('c', words);
-   cout << (state._rt_() == state._wd_() ? "/" : "??") << endl;
+   cout << (state._rt_() == state._wd_() ? "/" :
+      state._wd_()->get_contents()->build_path(state._wd_())) << endl;
 }
 
 void fn_rm (inode_state& state, const wordvec& words){

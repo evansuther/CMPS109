@@ -128,8 +128,8 @@ void inode::print_from(){
    contents->print();
 }
 
-/*void inode_state::print_from_rec(inode_ptr from){
-   string dirname = state._rt_()->get_contents()->find_name(from);
+/*void inode::print_from_rec(inode_ptr from){
+   string path = build_path(from);
    cout << "/" << dirname <<  ":" << endl;
    contents->print();
    vector<inode_ptr> subdirs = contents->get_subdirs();
@@ -218,6 +218,17 @@ string plain_file::find_name(inode_ptr) {
 }
 
 vector<inode_ptr> plain_file::get_subdirs(){
+   throw file_error ("is a plain file");
+}
+
+inode_ptr plain_file::get_parent(){
+   throw file_error ("is a plain file");
+}
+string plain_file::build_path(inode_ptr){
+   throw file_error ("is a plain file");
+}
+
+void plain_file::print_recursive(){
    throw file_error ("is a plain file");
 }
 
@@ -325,15 +336,16 @@ void directory::print(){
    }
 }
 
-/*void directory::print_recursive(){
-   build_path();
+void directory::print_recursive(){
+   string path = build_path(dirents.find(".")->second);
+   cout << path << ":" << endl;
    print();
    vector<inode_ptr> subdirs = get_subdirs();
    for (auto inode_itor: subdirs){
       inode_itor->get_contents()->print_recursive();
 
    }
-}*/
+}
 
 file_type directory::inode_type(){
    return file_type::DIRECTORY_TYPE;
@@ -392,4 +404,28 @@ vector<inode_ptr> directory::get_subdirs(){
       }
    }
    return subdirs;
+}
+
+inode_ptr directory::get_parent(){
+   auto parent = dirents.find("..");
+   return parent->second;
+}
+
+string directory::build_path(inode_ptr find_me){
+   string path{};
+   inode_ptr parent{find_me->get_contents()->get_parent()};
+   inode_ptr current{parent};
+   path = '/' + parent->get_contents()->find_name(find_me);
+   DEBUGF('q', "this is find me: " << find_me 
+      << "this is parent: " << parent << "this is parent's parent"
+      << parent->get_contents()->get_parent()<< endl);
+   while(parent != parent->get_contents()->get_parent()){
+      //current = parent->get_contents()->get_parent();
+      parent = parent->get_contents()->get_parent();
+      path = '/' + parent->get_contents()->find_name(current) + path;
+      current = parent;
+
+      DEBUGF('q', "this is new parent: " << parent << endl);
+   }
+   return path;
 }
