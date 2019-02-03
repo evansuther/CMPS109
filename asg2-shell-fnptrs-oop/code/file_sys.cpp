@@ -202,6 +202,14 @@ file_type plain_file::inode_type(){
 void plain_file::disown(){
    return;
 }
+
+string plain_file::find_name(inode_ptr) {
+   throw file_error ("is a plain file");
+}
+
+vector<base_file_ptr> directory::get_subdirs(){
+   throw file_error ("is a plain file");
+}
 
 directory::directory(){
    dirents.emplace(".", nullptr);
@@ -289,14 +297,10 @@ inode_ptr directory::mkfile (const string& filename) {
 void directory::print(){
    string spaces_nr, spaces_size, name;
    size_t nr_digits;
-   DEBUGF('p', " made it to dir::print()" << endl);
    for (auto itor: dirents){
-      DEBUGF('p', "made it into loop");
       nr_digits = num_digits(itor.second->get_inode_nr());
 
-      DEBUGF('p', "made it past num_digits");
       spaces_nr = _spaces(nr_digits);
-      DEBUGF('p', "made it past _spaces");
       size_t tmp_size = itor.second->get_contents()->size();
       size_t size_digits = num_digits(tmp_size);
       spaces_size = _spaces(size_digits);
@@ -321,4 +325,50 @@ void directory::disown(){
    }
    dirents.erase(".");
    dirents.erase("..");
+}
+
+string directory::find_name(inode_ptr find_me) {
+   base_file_ptr dir_maybe_me;
+   vector<base_file_ptr> subdirs = this.get_subdirs();
+   for (auto inode_itor : dirents){
+      if(inode_itor.first != "."  && 
+         inode_itor.first != ".." &&
+         inode_itor.second != nullptr)
+      {
+      
+         dir_maybe_me = inode_itor.second->get_contents();
+         if (inode_itor.second == find_me){
+            return inode_itor.first;
+         }
+         else if (dir_maybe_me->inode_type() == 
+                           file_type::DIRECTORY_TYPE)
+         {
+            subdirs.push_back(dir_maybe_me);
+         }
+      }
+   }
+
+   for (auto subdirs_itor : subdirs){
+      return subdirs_itor->find_name(find_me);
+   }
+   return "";
+}
+
+vector<base_file_ptr> directory::get_subdirs(){
+   base_file_ptr maybe_dir;
+   vector<base_file_ptr> subdirs{};
+   for (auto inode_itor : dirents){
+      if(inode_itor.first != "."  && 
+         inode_itor.first != ".." &&
+         inode_itor.second != nullptr)
+      {
+         maybe_dir = inode_itor.second->get_contents();
+         if (dir_maybe_me->inode_type() == 
+                           file_type::DIRECTORY_TYPE)
+         {
+            subdirs.push_back(dir_maybe_me);
+         }
+      }
+   }
+   return subdirs;
 }

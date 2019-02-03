@@ -91,16 +91,17 @@ void fn_cat (inode_state& state, const wordvec& words){
       if(itor == words.begin()){++itor;}
       inode_ptr final_path = deal_with_path_ls(state._wd_(), *itor);
       if(final_path == nullptr){
-         throw file_error("cat: " + *itor + 
-            ": No such file or directory");
+         cerr << "cat: " << *itor << 
+            ": No such file or directory" << endl;
       }else{
          if(final_path->get_contents()->inode_type() ==
                 file_type::DIRECTORY_TYPE){
-            throw file_error("cat: "+ words.at(1) +
-               ": No such file or directory");
+            cerr << "cat: "<< *itor << 
+               ": No such file or directory" << endl;
          }
          else{
             cout << final_path->get_contents()->readfile();
+            cout << endl;
          }
          
       }
@@ -159,7 +160,15 @@ void fn_ls (inode_state& state, const wordvec& words){
    ////////////////////////////////////////////////////////////////////
    inode_ptr final_path;
    if (words.size() == 1) {
-      cout << "/:" << endl;
+      if (state._wd_() != state._rt_()){
+         string dirname = 
+            state._rt_()->get_contents()->find_name(state._wd_());
+         cout << "/" << dirname <<  ":" << endl;
+      }
+      else{
+         //no args and at root
+         cout << "/:" << endl;
+      }
       state._wd_()->print_from();
    }
    else if (words.at(1)== "/"){

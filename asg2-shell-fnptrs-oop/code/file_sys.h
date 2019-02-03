@@ -110,6 +110,8 @@ class base_file{
       virtual void print() = 0;
       virtual file_type inode_type() = 0;
       virtual void disown() = 0;
+      virtual string find_name(inode_ptr) = 0 ;
+      virtual vector<base_file_ptr> get_subdirs() = 0;
 };
 
 // class plain_file -
@@ -137,6 +139,8 @@ class plain_file: public base_file {
       virtual void print() override;
       virtual file_type inode_type() override;
       virtual void disown() override;
+      virtual string find_name(inode_ptr) override;
+      virtual vector<base_file_ptr> get_subdirs() override;
 };
 
 // class directory -
@@ -177,6 +181,8 @@ class directory: public base_file {
       virtual void print() override;
       virtual file_type inode_type() override;
       virtual void disown() override;
+      virtual string find_name(inode_ptr) override;
+      virtual vector<base_file_ptr> get_subdirs() override;
 };
 
 #endif
