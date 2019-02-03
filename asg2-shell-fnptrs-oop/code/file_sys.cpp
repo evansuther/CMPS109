@@ -49,6 +49,10 @@ void inode_state::prompt(const wordvec& words){
    prompt_ = pr;
 }
 
+void inode_state::set_cwd(inode_ptr final_dir){
+   cwd = final_dir;
+}
+
 ostream& operator<< (ostream& out, const inode_state& state) {
    out << "inode_state: root = " << state.root
        << ", cwd = " << state.cwd;
@@ -85,13 +89,17 @@ void inode::disown(){
    contents->disown();
 }
 
-
 size_t num_digits (size_t);
 size_t num_digits (size_t size){
    size_t num {0};
-   while(size) {
-      ++num;
-      size /= 10;
+   if(size != 0){
+      while(size) {
+         ++num;
+         size /= 10;
+      }
+   }
+   else{
+      num = {1};
    }
    return num;
 }
@@ -176,7 +184,7 @@ void plain_file::set_parent(inode_ptr){
 }
 
 inode_ptr plain_file::find(const string&){
-    throw file_error ("is a plain file");
+    return nullptr;
 }
 
 void plain_file::print(){
@@ -262,7 +270,7 @@ inode_ptr directory::find(const string& path){
    auto i = dirents.find(path);
    if (i == dirents.end()) {
       DEBUGF('d', "oops" << endl);
-      throw file_error ("not a file");
+      return nullptr;
    }
    else 
       return i->second;
@@ -280,7 +288,7 @@ inode_ptr directory::mkfile (const string& filename) {
 
 void directory::print(){
    string spaces_nr, spaces_size, name;
-   size_t nr_digits;
+   size_t nr_digits, size_digits;
    DEBUGF('p', " made it to dir::print()" << endl);
    for (auto itor: dirents){
       DEBUGF('p', "made it into loop");
@@ -289,8 +297,15 @@ void directory::print(){
       DEBUGF('p', "made it past num_digits");
       spaces_nr = _spaces(nr_digits);
       DEBUGF('p', "made it past _spaces");
+
       size_t tmp_size = itor.second->get_contents()->size();
-      size_t size_digits = num_digits(tmp_size);
+      if (tmp_size != 0 ){
+         size_digits = num_digits(tmp_size);
+         
+      }
+      else{
+         size_digits = 1;
+      }
       spaces_size = _spaces(size_digits);
       name = itor.first + 
          ((itor.second->inode_type() ==file_type::DIRECTORY_TYPE) and

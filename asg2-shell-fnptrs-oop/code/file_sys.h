@@ -45,6 +45,7 @@ class inode_state {
       // fn defined outside of class definition?
       const string& prompt() const;
       void prompt(const wordvec&);
+      void set_cwd(inode_ptr);
       inode_ptr _wd_() {return cwd;}
 
       inode_ptr _rt_() {return root;}
