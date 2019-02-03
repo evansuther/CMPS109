@@ -50,7 +50,7 @@ inode_ptr deal_with_path_ls(inode_ptr wd, const string& path){
       //do a more norm itor go to parts -1
       for (size_t i = 0; i != parts.size(); ++i){
       //for (auto part : parts){
-         auto found = current->get_contents()->find(parts[i]);
+         auto found = current->get_contents()->find(parts.at(i));
          if(found == nullptr){
             return nullptr;
          }else{
@@ -71,10 +71,14 @@ inode_ptr deal_with_path_mk(inode_ptr wd, const string& path){
       wordvec parts = split(path, "/");
       inode_ptr current = wd;
       //do a more norm itor go to parts -1
-      for (size_t i = 0; i != parts.size() -1; ++i){
+      for (size_t i = 0; i != parts.size() - 1; ++i){
 
-         auto found = current->get_contents()->find(parts[i]);
-         current = found;
+         auto found = current->get_contents()->find(parts.at(i));
+         if(found == nullptr){
+            return nullptr;
+         }else{
+            current = found;
+         }
       }
       return current;
    }
@@ -265,6 +269,9 @@ void fn_make (inode_state& state, const wordvec& words){
    }
    else{
       new_fle = deal_with_path_mk(state._wd_(), words.at(1));
+      auto itor = words.end();
+      --itor;
+      new_fle = new_fle->get_contents()->mkdir(*itor);
    }
    
    // pointer to empty file in directory
@@ -291,14 +298,18 @@ void fn_mkdir (inode_state& state, const wordvec& words){
    // end of path for something that doesn't exist yet
    inode_ptr working_dir = state._wd_();
    // make default dir, add to wd's map
-   inode_ptr new_dir;
+   inode_ptr new_dir, parent_ptr;
    //if words.at(1) doesnt have a slash
    //there is no need to deal with paths
    if (words.at(1).find("/") == string::npos){
       new_dir = working_dir->get_contents()->mkdir(words.at(1));
    }
    else{//deal with directory paths
-      new_dir = deal_with_path_mk(working_dir, words.at(1));
+      parent_ptr = deal_with_path_mk(working_dir, words.at(1));
+
+      auto itor = words.end();
+      --itor;
+      new_dir = parent_ptr->get_contents()->mkdir(*itor);
    }
    //check if directory not found
    if(new_dir == nullptr){
