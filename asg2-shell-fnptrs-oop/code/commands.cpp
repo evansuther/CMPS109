@@ -170,7 +170,6 @@ void fn_ls (inode_state& state, const wordvec& words){
       inode_ptr working_dir = state._wd_();
       final_path = deal_with_path_ls(working_dir, words.at(1));
       if(final_path == nullptr){
-         //prints file name and shouldn't************************
          throw file_error("ls: cannot access " + 
                words.at(1) + ": No such file or directory");
       }
@@ -232,15 +231,16 @@ void fn_mkdir (inode_state& state, const wordvec& words){
    inode_ptr working_dir = state._wd_();
    // make default dir, add to wd's map
    inode_ptr new_dir;
+   //if words.at(1) doesnt have a slash
+   //there is no need to deal with paths
    if (words.at(1).find("/") == string::npos){
       new_dir = working_dir->get_contents()->mkdir(words.at(1));
    }
-   else{
+   else{//deal with directory paths
       new_dir = deal_with_path_mk(working_dir, words.at(1));
    }
    //check if directory not found
    if(new_dir == nullptr){
-      //prints file name and shouldn't*********************************
       throw file_error("mkdir: cannot create directory '" + 
                         words.at(1) + "': No such file or directory");
    }

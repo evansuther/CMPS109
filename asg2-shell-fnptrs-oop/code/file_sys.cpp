@@ -288,7 +288,7 @@ inode_ptr directory::mkfile (const string& filename) {
 
 void directory::print(){
    string spaces_nr, spaces_size, name;
-   size_t nr_digits, size_digits;
+   size_t nr_digits;
    DEBUGF('p', " made it to dir::print()" << endl);
    for (auto itor: dirents){
       DEBUGF('p', "made it into loop");
@@ -297,15 +297,8 @@ void directory::print(){
       DEBUGF('p', "made it past num_digits");
       spaces_nr = _spaces(nr_digits);
       DEBUGF('p', "made it past _spaces");
-
       size_t tmp_size = itor.second->get_contents()->size();
-      if (tmp_size != 0 ){
-         size_digits = num_digits(tmp_size);
-         
-      }
-      else{
-         size_digits = 1;
-      }
+      size_t size_digits = num_digits(tmp_size);
       spaces_size = _spaces(size_digits);
       name = itor.first + 
          ((itor.second->inode_type() ==file_type::DIRECTORY_TYPE) and
