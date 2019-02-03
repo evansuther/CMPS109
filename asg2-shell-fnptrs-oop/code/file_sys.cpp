@@ -207,7 +207,7 @@ string plain_file::find_name(inode_ptr) {
    throw file_error ("is a plain file");
 }
 
-vector<base_file_ptr> directory::get_subdirs(){
+vector<inode_ptr> plain_file::get_subdirs(){
    throw file_error ("is a plain file");
 }
 
@@ -329,7 +329,7 @@ void directory::disown(){
 
 string directory::find_name(inode_ptr find_me) {
    base_file_ptr dir_maybe_me;
-   vector<base_file_ptr> subdirs = this.get_subdirs();
+   vector<base_file_ptr> subdirs {};
    for (auto inode_itor : dirents){
       if(inode_itor.first != "."  && 
          inode_itor.first != ".." &&
@@ -354,19 +354,19 @@ string directory::find_name(inode_ptr find_me) {
    return "";
 }
 
-vector<base_file_ptr> directory::get_subdirs(){
+vector<inode_ptr> directory::get_subdirs(){
    base_file_ptr maybe_dir;
-   vector<base_file_ptr> subdirs{};
+   vector<inode_ptr> subdirs{};
    for (auto inode_itor : dirents){
       if(inode_itor.first != "."  && 
          inode_itor.first != ".." &&
          inode_itor.second != nullptr)
       {
          maybe_dir = inode_itor.second->get_contents();
-         if (dir_maybe_me->inode_type() == 
+         if (maybe_dir->inode_type() == 
                            file_type::DIRECTORY_TYPE)
          {
-            subdirs.push_back(dir_maybe_me);
+            subdirs.push_back(inode_itor.second);
          }
       }
    }

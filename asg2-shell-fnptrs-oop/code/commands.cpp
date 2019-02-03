@@ -169,11 +169,11 @@ void fn_ls (inode_state& state, const wordvec& words){
          //no args and at root
          cout << "/:" << endl;
       }
-      state._wd_()->print_from();
+      final_path = state._wd_();
    }
    else if (words.at(1)== "/"){
       cout << "/:" << endl;
-      state._rt_()->print_from();
+      final_path = state._rt_();
    }
    else if (words.size() != 1){
       inode_ptr working_dir = state._wd_();
@@ -189,16 +189,65 @@ void fn_ls (inode_state& state, const wordvec& words){
          string path = *itor;
          //do a more norm itor go to parts -1
          cout << path <<":" << endl;
-         final_path->print_from();
       }
 
    }
+   final_path->print_from();
    // check if ls has operands(directories)
 }
 
 void fn_lsr (inode_state& state, const wordvec& words){
    DEBUGF ('c', state);
    DEBUGF ('c', words);
+   inode_ptr final_path;
+   string dirname;
+   vector<inode_ptr> subdirs;
+   if (words.size() == 1) {
+      if (state._wd_() != state._rt_()){
+         dirname = 
+            state._rt_()->get_contents()->find_name(state._wd_());
+      }
+      else{
+         //no args and at root
+         dirname = "";
+      }
+      final_path = state._wd_();
+      subdirs = 
+         state._wd_()->get_contents()->get_subdirs();
+
+   }
+   else if (words.at(1)== "/"){
+      dirname = "";
+      final_path = state._rt_();
+      subdirs = 
+         state._rt_()->get_contents()->get_subdirs();
+   }
+   else if (words.size() != 1){
+      inode_ptr working_dir = state._wd_();
+      final_path = deal_with_path_ls(working_dir, words.at(1));
+      if(final_path == nullptr){
+         throw file_error("ls: cannot access " + 
+               words.at(1) + ": No such file or directory");
+      }
+      else{
+         subdirs = 
+            final_path->get_contents()->get_subdirs();
+         wordvec parts = split(words.at(1), "/");
+         //make an itor to go to parts -1
+         vector<string>::const_iterator itor = words.end();
+         --itor;
+         dirname = *itor;
+      }
+
+   }
+   cout << "/" << dirname <<  ":" << endl;
+   final_path->print_from();
+
+   for(auto itor : subdirs){
+         dirname = state._rt_()->get_contents()->find_name(itor);
+         cout << "/" << dirname <<  ":" << endl;
+         itor->print_from();
+   }
 }
 
 void fn_make (inode_state& state, const wordvec& words){
