@@ -141,6 +141,11 @@ inode_ptr inode::find(string find_me){
    return contents->find(find_me);
 }
 
+// call on parent directory
+string inode::find_name(inode_ptr find_me){
+   return contents->find_name(find_me);
+}
+
 /*void inode::print_from_rec(inode_ptr from){
    string path = build_path(from);
    cout << "/" << dirname <<  ":" << endl;
@@ -391,12 +396,6 @@ void directory::rm(string rm_me){
    if (maybe_me == dirents.end()){
       throw file_error("No such file or directory");
    }
-   else if (maybe_me->second->inode_type() 
-                  == file_type:: DIRECTORY_TYPE 
-            and maybe_me->second->size() != 2)
-   {
-      throw file_error("Is a non-empty directory");
-   }
    else{
       maybe_me->second->disown();
       dirents.erase(rm_me);
@@ -415,6 +414,7 @@ string directory::find_name(inode_ptr find_me) {
       
          dir_maybe_me = inode_itor.second->get_contents();
          if (inode_itor.second == find_me){
+            DEBUGF('f', "found_name: " << inode_itor.first << endl);
             return inode_itor.first;
          }
          else if (dir_maybe_me->inode_type() == 

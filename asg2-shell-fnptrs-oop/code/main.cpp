@@ -82,7 +82,7 @@ int main (int argc, char** argv) {
             complain() << error.what() << endl;
          }catch (file_error& error){
             cerr << error.what() << endl;
-            exit_status::set (EXIT_FAILURE);
+            exit_status::set(EXIT_FAILURE);
          }
       }
    } catch (ysh_exit&) {

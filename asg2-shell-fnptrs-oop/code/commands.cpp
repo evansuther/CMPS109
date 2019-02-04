@@ -15,6 +15,7 @@ command_hash cmd_hash {
    {"prompt", fn_prompt},
    {"pwd"   , fn_pwd   },
    {"rm"    , fn_rm    },
+   {"rmr"    , fn_rmr    },
 };
 
 command_fn find_command_fn (const string& cmd) {
@@ -168,7 +169,7 @@ void fn_echo (inode_state& state, const wordvec& words){
 void fn_exit (inode_state& state, const wordvec& words){
    DEBUGF ('c', state);
    DEBUGF ('c', words);
-   int ex_st = 0;
+   int ex_st = exit_status::get();
    if (words.size() != 1){
       ex_st = atoi(words.at(1).c_str());
       // non-numeric argument
@@ -224,6 +225,13 @@ void fn_ls (inode_state& state, const wordvec& words){
    // check if ls has operands(directories)
 }
 
+void print_subdirs(vector<inode_ptr>);
+void print_subdirs(vector<inode_ptr> subdirs){
+   for(auto itor : subdirs){
+      itor->get_contents()->print_recursive();
+   }
+}
+
 void fn_lsr (inode_state& state, const wordvec& words){
    DEBUGF ('c', state);
    DEBUGF ('c', words);
@@ -237,46 +245,57 @@ void fn_lsr (inode_state& state, const wordvec& words){
          // need to get pathname for working directory
          dirname = 
             state._rt_()->get_contents()->build_path(state._wd_());
+         cout << dirname <<  ":" << endl;
       }
       else{
          //no args and at root
          dirname = "";
+         cout << "/:" << endl;
       }
       // set final path to dir to print
       final_path = state._wd_();
       // get subdirs of current working dir
-      subdirs = 
-         final_path->get_contents()->get_subdirs();
+      subdirs = final_path->get_contents()->get_subdirs();
+      final_path->print_from();
+      print_subdirs(subdirs);
 
    }
    else if (words.at(1)== "/"){
       //need to print from root
       dirname = "";
+      cout << "/:" << endl;
       final_path = state._rt_();
-      subdirs = 
-         final_path->get_contents()->get_subdirs();
+      subdirs = final_path->get_contents()->get_subdirs();
+      final_path->print_from();
+      print_subdirs(subdirs);
    }
    else if (words.size() != 1){
       // NEED TO DO MULTIPLE ARGS
       inode_ptr working_dir = state._wd_();
-      final_path = deal_with_path_ls(working_dir, words.at(1));
-      if(final_path == nullptr){
-         throw file_error("ls: cannot access " + 
-               words.at(1) + ": No such file or directory");
-      }
-      else{
-         subdirs = 
-            final_path->get_contents()->get_subdirs();
-         wordvec parts = split(words.at(1), "/");
-         //make an itor to go to parts -1
-         vector<string>::const_iterator itor = words.end();
-         --itor;
-
-         dirname = words.at(1);
+      for (auto pathname = words.begin();
+                pathname != words.end(); ++pathname)
+      {
+         if(pathname == words.begin()){++pathname;} // skip first word
+         // try to find ptr to file
+         final_path = deal_with_path_ls(working_dir, *pathname);
+         if(final_path == nullptr){
+            throw file_error("lsr: cannot access " + 
+                  *pathname + ": No such file or directory");
+         }
+         else{
+            subdirs = 
+               final_path->get_contents()->get_subdirs();
+            //wordvec parts = split(*pathname, "/");
+            //make an itor to go to parts -1
+            //dirname = *pathname;
+            cout << "/" << *pathname <<  ":" << endl;
+            final_path->print_from();
+            print_subdirs(subdirs);
+         }
       }
 
    }
-   if(dirname == ""){
+  /* if(dirname == ""){
       cout << "/:" << endl;
    }else{
       cout << dirname <<  ":" << endl;
@@ -288,7 +307,7 @@ void fn_lsr (inode_state& state, const wordvec& words){
       dirname = itor->get_contents()->build_path(itor);
       //cout << dirname <<  ":" << endl;
       itor->get_contents()->print_recursive();
-   }
+   } */
 }
 
 void fn_make (inode_state& state, const wordvec& words){
@@ -393,26 +412,24 @@ void fn_rm (inode_state& state, const wordvec& words){
    }
    inode_ptr parent_ptr, rm_me_ptr;
    try{
-         // try to find ptr to file
+      // try to find ptr to file
       parent_ptr = deal_with_path_mk(state._wd_(), words.at(1));
-      if(parent_ptr == nullptr){
+      rm_me_ptr = deal_with_path_ls(state._wd_(), words.at(1));
+      if(parent_ptr == nullptr or rm_me_ptr == nullptr){
          // not found
          throw file_error("rm: " + words.at(1) + 
                           ": No such file or directory");
       }
       else{
          // extract new dirname from pathname
-         vector<string> path_parts_vec = split(words.at(1), "/");
-         auto path_part = path_parts_vec.end();
-         --path_part;
-         rm_me_ptr = parent_ptr->find(*path_part);
-         if (rm_me_ptr->size() != 0
+         string name = parent_ptr->find_name(rm_me_ptr);
+         if (rm_me_ptr->size() != 2
              and rm_me_ptr->inode_type() == file_type::DIRECTORY_TYPE)
          {
             throw file_error("rm: " + words.at(1)  
                                +  ": is a non-empty directory");
          }
-         parent_ptr->rm(*path_part);
+         parent_ptr->rm(name);
       }
    }catch(file_error error){
       cerr << error.what() << endl;
@@ -425,5 +442,42 @@ void fn_rm (inode_state& state, const wordvec& words){
 void fn_rmr (inode_state& state, const wordvec& words){
    DEBUGF ('c', state);
    DEBUGF ('c', words);
+   // get to parent pointer, remove final thing in path from parentInode
+   // then disown pointer to thing
+
+   // error for pathname to not exist
+   // if directory, must be empty, else error
+   #define _FILE_DNE_ ": No such file or directory"
+
+   if(words.size() <= 1) {
+      throw command_error("rmr: no file specified");
+   }
+   inode_ptr parent_ptr, rm_me_ptr;
+   try{
+         // try to find ptr to file
+      parent_ptr = deal_with_path_mk(state._wd_(), words.at(1));
+      rm_me_ptr = deal_with_path_ls(state._wd_(), words.at(1));
+      if(parent_ptr == nullptr or rm_me_ptr == nullptr){
+         // not found
+         throw file_error("rmr: " + words.at(1) + _FILE_DNE_);
+      }
+      else{
+         // extract new dirname from pathname
+         string name = parent_ptr->find_name(rm_me_ptr);
+         if (rm_me_ptr->inode_type() == file_type::DIRECTORY_TYPE)
+         {
+            // delete dir
+            parent_ptr->rm(name);
+         }
+         else{
+            fn_rm(state, words);
+         }
+
+      }
+   }catch(file_error error){
+      cerr << error.what() << endl;
+      exit_status::set (EXIT_FAILURE);
+      
+   }
 }
 

@@ -82,6 +82,7 @@ class inode {
       void rm(string);
       size_t size() const;
       inode_ptr find(string);
+      string find_name(inode_ptr);
 };
 
 
