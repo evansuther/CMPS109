@@ -170,6 +170,10 @@ const wordvec& plain_file::readfile() const {
 
 void plain_file::writefile (const wordvec& words) {
    DEBUGF ('i', words);
+   if (data.size() != 0)
+   {
+      data = {};
+   }
    for(size_t i = 2; i != words.size(); ++i){
       DEBUGF('d', "pushing " << words.at(i) << " to data" << endl);
       data.push_back(words.at(i));
@@ -308,6 +312,11 @@ inode_ptr directory::find(const string& path){
 inode_ptr directory::mkfile (const string& filename) {
    DEBUGF ('i', filename);
    inode_ptr t = make_shared<inode>(file_type::PLAIN_TYPE);
+   auto map_itr = dirents.find(filename);
+   // directory already exists
+   if (map_itr != dirents.end()){
+      return map_itr->second;
+   }
    // putting subdir into this dir's map
    dirents.emplace(filename, t);
    DEBUGF('d', "address of new plain_file = " << t << endl);
@@ -380,9 +389,12 @@ string directory::find_name(inode_ptr find_me) {
          }
       }
    }
-
+   string name;
    for (auto subdirs_itor : subdirs){
-      return subdirs_itor->find_name(find_me);
+      name = subdirs_itor->find_name(find_me);
+      if (name != ""){
+         return name;
+      }
    }
    return "";
 }

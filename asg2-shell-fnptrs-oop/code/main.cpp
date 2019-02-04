@@ -81,7 +81,8 @@ int main (int argc, char** argv) {
             // exn is thrown and printed here.
             complain() << error.what() << endl;
          }catch (file_error& error){
-            complain() << error.what() << endl;
+            cerr << error.what() << endl;
+            exit_status::set (EXIT_FAILURE);
          }
       }
    } catch (ysh_exit&) {

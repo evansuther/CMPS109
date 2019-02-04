@@ -47,9 +47,7 @@ inode_ptr deal_with_path_ls(inode_ptr wd, const string& path){
    else{
       wordvec parts = split(path, "/");
       inode_ptr current = wd;
-      //do a more norm itor go to parts -1
       for (size_t i = 0; i != parts.size(); ++i){
-      //for (auto part : parts){
          auto found = current->get_contents()->find(parts.at(i));
          if(found == nullptr){
             return nullptr;
@@ -68,50 +66,60 @@ inode_ptr deal_with_path_mk(inode_ptr wd, const string& path){
       return wd;
    }
    else{
+      // split path to consider parts one at a time
       wordvec parts = split(path, "/");
       inode_ptr current = wd;
-      //do a more norm itor go to parts -1
+      // iterate over parts of path, if find returns nullptr
       for (size_t i = 0; i != parts.size() - 1; ++i){
-
          auto found = current->get_contents()->find(parts.at(i));
          if(found == nullptr){
+            // no directory of this name
             return nullptr;
-         }else{
+         }
+         else{
             current = found;
          }
       }
+
       return current;
    }
 }
-// derr's
+
 void fn_cat (inode_state& state, const wordvec& words){
    DEBUGF ('c', state);
    DEBUGF ('c', words);
    if(words.size() <= 1) {
       throw command_error("cat: no file specified");
    }
+   inode_ptr final_path;
    for (vector<string>::const_iterator itor = words.begin();
-         itor != words.end(); ++itor){
-      if(itor == words.begin()){++itor;}
-      inode_ptr final_path = deal_with_path_ls(state._wd_(), *itor);
-      if(final_path == nullptr){
-         cerr << "cat: " << *itor << 
-            ": No such file or directory" << endl;
-      }else{
-         if(final_path->get_contents()->inode_type() ==
-                file_type::DIRECTORY_TYPE){
-            cerr << "cat: "<< *itor << 
-               ": No such file or directory" << endl;
+         itor != words.end(); ++itor)
+   {
+      try{
+         if(itor == words.begin()){++itor;} // skip first word
+         // try to find ptr to file
+         final_path = deal_with_path_ls(state._wd_(), *itor);
+         if(final_path == nullptr){
+            // not found
+            throw file_error("cat: " + *itor + 
+                             ": No such file or directory");
+         }
+         else if(final_path->inode_type() == file_type::DIRECTORY_TYPE)
+         { //wrong type
+            throw file_error("cat: " + *itor + ": Is a directory");
          }
          else{
             cout << final_path->get_contents()->readfile();
             cout << endl;
          }
+      }catch(file_error error){
+         cerr << error.what() << endl;
+         exit_status::set (EXIT_FAILURE);
          
       }
-      
    }
 }
+
 
 void fn_cd (inode_state& state, const wordvec& words){
    DEBUGF ('c', state);
@@ -119,14 +127,28 @@ void fn_cd (inode_state& state, const wordvec& words){
    if (words.size() == 1){
       state.set_cwd(state._rt_());
    }
+   else if(words.size() != 2){
+      // bash doesn't mind but done for asg spec
+      throw command_error
+                ("cd: Too many operands");
+   }
+   else if (words.at(1)== "/"){
+      // pathname / is root
+      state.set_cwd(state._rt_());
+   }
    else{
       inode_ptr final_dir = 
             deal_with_path_ls(state._wd_(), words.at(1));
       if(final_dir == nullptr){
-         throw command_error("cd: "       + 
-                             words.at(1) +
-                             " no file specified");
-      }else{
+         throw command_error
+                ("cd: " + words.at(1) + ": No such file or directory");
+      }
+      else if(final_dir->inode_type() == file_type::PLAIN_TYPE)
+         { //wrong type
+            throw file_error
+                        ("cd: " + words.at(1) + ": Not a directory");
+         }
+      else{
          state.set_cwd(final_dir);
       }
       
@@ -159,26 +181,31 @@ void fn_ls (inode_state& state, const wordvec& words){
    DEBUGF ('c', state);
    DEBUGF ('c', words);
    
-   // no argument, use wd
-   ////////////////////////////////////////////////////////////////////
    inode_ptr final_path;
    if (words.size() == 1) {
+      // no args, use working dir
       if (state._wd_() != state._rt_()){
+         // working dir is not root,
+         // need to get pathname for working directory
          string dirname = 
             state._rt_()->get_contents()->build_path(state._wd_());
-         cout << "/" << dirname <<  ":" << endl;
+         cout << dirname <<  ":" << endl;
       }
       else{
-         //no args and at root
+         // no args and at root
          cout << "/:" << endl;
       }
+      // set final path to dir to print
       final_path = state._wd_();
    }
+   // split here for multiple args
    else if (words.at(1)== "/"){
+      // pathname / is root
       cout << "/:" << endl;
       final_path = state._rt_();
    }
    else if (words.size() != 1){
+      // NEED TO DO MULTIPLE ARGS
       inode_ptr working_dir = state._wd_();
       final_path = deal_with_path_ls(working_dir, words.at(1));
       if(final_path == nullptr){
@@ -202,28 +229,33 @@ void fn_lsr (inode_state& state, const wordvec& words){
    string dirname;
    vector<inode_ptr> subdirs;
    if (words.size() == 1) {
+      // no args, use working dir
       if (state._wd_() != state._rt_()){
-         dirname = state._rt_()->get_contents()->build_path(
-            state._wd_());
-
+         // working dir is not root,
+         // need to get pathname for working directory
+         dirname = 
+            state._rt_()->get_contents()->build_path(state._wd_());
       }
       else{
          //no args and at root
          dirname = "";
       }
+      // set final path to dir to print
       final_path = state._wd_();
+      // get subdirs of current working dir
       subdirs = 
-         state._wd_()->get_contents()->get_subdirs();
+         final_path->get_contents()->get_subdirs();
 
    }
-   //need to print from root
    else if (words.at(1)== "/"){
+      //need to print from root
       dirname = "";
       final_path = state._rt_();
       subdirs = 
-         state._rt_()->get_contents()->get_subdirs();
+         final_path->get_contents()->get_subdirs();
    }
    else if (words.size() != 1){
+      // NEED TO DO MULTIPLE ARGS
       inode_ptr working_dir = state._wd_();
       final_path = deal_with_path_ls(working_dir, words.at(1));
       if(final_path == nullptr){
@@ -260,32 +292,38 @@ void fn_lsr (inode_state& state, const wordvec& words){
 void fn_make (inode_state& state, const wordvec& words){
    DEBUGF ('c', state);
    DEBUGF ('c', words);
-   // deal with paths ***********************************************
-   // deal_with_path(path) will throw exn at 
-   // end of path for something that doesn't exist yet
-   inode_ptr new_fle;
+   // default parent for new file is working dir
+   inode_ptr new_fle, parent_ptr;
+   parent_ptr = state._wd_();
+
    if (words.at(1).find("/") == string::npos){
-      new_fle = state._wd_()->get_contents()->mkfile(words.at(1));
+      // no path to deal with
+      new_fle = parent_ptr->get_contents()->mkfile(words.at(1));
    }
    else{
-      new_fle = deal_with_path_mk(state._wd_(), words.at(1));
-      auto itor = words.end();
-      --itor;
-      new_fle = new_fle->get_contents()->mkdir(*itor);
+      // path to deal with, find ptr to parent directory for new file
+      parent_ptr = deal_with_path_mk(parent_ptr, words.at(1));
+      // no parent directory found, bad pathname
+      if(parent_ptr == nullptr){
+         throw file_error("make: cannot create directory '" + 
+                  words.at(1) + "': No such file or directory");
+      }
+
+      // extract filename from pathname
+      vector<string> path_parts = split(words.at(1), "/");
+      auto parts_itor = path_parts.end();
+      --parts_itor;
+      // make empty file pointer
+      new_fle = parent_ptr->get_contents()->mkfile(*parts_itor);
    }
    
    // pointer to empty file in directory
-   
    // put the words into the file
-   if(new_fle == nullptr){
-      //prints file name and shouldn't*********************************
-      throw file_error("make: cannot create directory '" + 
-                        words.at(1) + "': No such file or directory");
-   }
-   else{
+   try{
       new_fle->get_contents()->writefile(words);  
+   } catch (file_error error){
+      throw file_error("make: " + words.at(1) + " " + error.what());
    }
-   
 }
 
 
@@ -293,34 +331,36 @@ void fn_make (inode_state& state, const wordvec& words){
 void fn_mkdir (inode_state& state, const wordvec& words){
    DEBUGF ('c', state);
    DEBUGF ('c', words);
-   // deal with paths ***********************************************
-   // deal_with_path(path) will throw exn at 
-   // end of path for something that doesn't exist yet
-   inode_ptr working_dir = state._wd_();
-   // make default dir, add to wd's map
+   // default parent for new dir is working dir
    inode_ptr new_dir, parent_ptr;
-   //if words.at(1) doesnt have a slash
-   //there is no need to deal with paths
-   if (words.at(1).find("/") == string::npos){
-      new_dir = working_dir->get_contents()->mkdir(words.at(1));
-   }
-   else{//deal with directory paths
-      parent_ptr = deal_with_path_mk(working_dir, words.at(1));
+   parent_ptr = state._wd_();
 
-      auto itor = words.end();
-      --itor;
-      new_dir = parent_ptr->get_contents()->mkdir(*itor);
+   // if words.at(1) doesnt have a slash
+   // there is no need to deal with paths
+   if (words.at(1).find("/") == string::npos){
+      new_dir = parent_ptr->get_contents()->mkdir(words.at(1));
    }
-   //check if directory not found
-   if(new_dir == nullptr){
-      throw file_error("mkdir: cannot create directory '" + 
+   else{
+      // path to deal with, find ptr to parent directory for new file
+      parent_ptr = deal_with_path_mk(parent_ptr, words.at(1));
+      // no parent directory found, bad pathname
+      DEBUGF('x',"parent_ptr = " << parent_ptr << endl);
+      if(parent_ptr == nullptr){
+         throw file_error("mkdir: cannot create directory '" + 
                         words.at(1) + "': No such file or directory");
+      }
+
+      // extract new dirname from pathname
+      vector<string> path_parts = split(words.at(1), "/");
+      auto parts_itor = path_parts.end();
+      --parts_itor;
+      // make empty dir pointer
+      new_dir = parent_ptr->get_contents()->mkdir(*parts_itor);
    }
-   else{// need to connect child to parent
-      new_dir->get_contents()->set_parent(working_dir);
-      new_dir->get_contents()->set_dot(new_dir);  
-   }
-   
+
+   // need to connect child to parent
+   new_dir->get_contents()->set_parent(parent_ptr);
+   new_dir->get_contents()->set_dot(new_dir);  
 }
 
 void fn_prompt (inode_state& state, const wordvec& words){

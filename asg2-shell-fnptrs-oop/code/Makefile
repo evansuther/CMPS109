@@ -59,6 +59,10 @@ again :
 grind	:	${EXECBIN}
 	valgrind --leak-check=full ./${EXECBIN} <test2.ysh 1>grind.out 2>grind.err
 
+submit	: 
+	submit cmps109-wm.w19 asg2 PARTNER README Makefile ${CPPSOURCE} ${CPPHEADER}
+
+
 ifeq (${NEEDINCL}, )
 include ${DEPFILE}
 endif
