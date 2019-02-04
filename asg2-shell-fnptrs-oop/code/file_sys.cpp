@@ -89,6 +89,15 @@ void inode::disown(){
    contents->disown();
 }
 
+void inode::rm(string rm_me){
+   // called on parent directory to deal with from there
+   contents->rm(rm_me);
+}
+
+size_t inode::size() const{
+   return contents->size();
+}
+
 size_t num_digits (size_t);
 size_t num_digits (size_t size){
    size_t num {0};
@@ -126,6 +135,10 @@ string _spaces(size_t size){
 
 void inode::print_from(){
    contents->print();
+}
+
+inode_ptr inode::find(string find_me){
+   return contents->find(find_me);
 }
 
 /*void inode::print_from_rec(inode_ptr from){
@@ -234,6 +247,10 @@ string plain_file::build_path(inode_ptr){
 
 void plain_file::print_recursive(){
    throw file_error ("is a plain file");
+}
+
+void plain_file::rm(string){
+   throw file_error ("RM $$$is a plain file");
 }
 
 directory::directory(){
@@ -367,6 +384,24 @@ void directory::disown(){
    }
    dirents.erase(".");
    dirents.erase("..");
+}
+
+void directory::rm(string rm_me){
+   auto maybe_me = dirents.find(rm_me);
+   if (maybe_me == dirents.end()){
+      throw file_error("No such file or directory");
+   }
+   else if (maybe_me->second->inode_type() 
+                  == file_type:: DIRECTORY_TYPE 
+            and maybe_me->second->size() != 2)
+   {
+      throw file_error("Is a non-empty directory");
+   }
+   else{
+      maybe_me->second->disown();
+      dirents.erase(rm_me);
+   }
+   --size_;
 }
 
 string directory::find_name(inode_ptr find_me) {

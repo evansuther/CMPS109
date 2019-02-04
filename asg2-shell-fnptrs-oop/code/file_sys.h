@@ -79,6 +79,9 @@ class inode {
       void print_from();
       file_type inode_type();
       void disown();
+      void rm(string);
+      size_t size() const;
+      inode_ptr find(string);
 };
 
 
@@ -116,6 +119,7 @@ class base_file{
       virtual string build_path(inode_ptr) = 0;
       virtual inode_ptr get_parent() = 0;
       virtual void print_recursive() = 0;
+      virtual void rm(string) = 0;
 };
 
 // class plain_file -
@@ -148,6 +152,7 @@ class plain_file: public base_file {
       virtual string build_path(inode_ptr) override;
       virtual inode_ptr get_parent() override;
       virtual void print_recursive() override;
+      virtual void rm(string) override;
 };
 
 // class directory -
@@ -193,6 +198,7 @@ class directory: public base_file {
       virtual string build_path(inode_ptr) override;
       virtual inode_ptr get_parent() override;
       virtual void print_recursive() override;
+      virtual void rm(string) override;
 };
 
 #endif

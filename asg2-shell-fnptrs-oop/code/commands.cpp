@@ -110,7 +110,9 @@ void fn_cat (inode_state& state, const wordvec& words){
          }
          else{
             cout << final_path->get_contents()->readfile();
-            cout << endl;
+            if(final_path->size() != 0){
+               cout << endl;
+            }
          }
       }catch(file_error error){
          cerr << error.what() << endl;
@@ -319,10 +321,9 @@ void fn_make (inode_state& state, const wordvec& words){
    
    // pointer to empty file in directory
    // put the words into the file
-   try{
-      new_fle->get_contents()->writefile(words);  
-   } catch (file_error error){
-      throw file_error("make: " + words.at(1) + " " + error.what());
+   try{ new_fle->get_contents()->writefile(words);  } 
+   catch (file_error error){
+      throw file_error("make: " + words.at(1) + ": " + error.what());
    }
 }
 
@@ -379,7 +380,47 @@ void fn_pwd (inode_state& state, const wordvec& words){
 void fn_rm (inode_state& state, const wordvec& words){
    DEBUGF ('c', state);
    DEBUGF ('c', words);
+
+   // get to parent pointer, remove final thing in path from parentInode
+   // then disown pointer to thing
+
+   // error for pathname to not exist
+   // if directory, must be empty, else error
+
+
+   if(words.size() <= 1) {
+      throw command_error("rm: no file specified");
+   }
+   inode_ptr parent_ptr, rm_me_ptr;
+   try{
+         // try to find ptr to file
+      parent_ptr = deal_with_path_mk(state._wd_(), words.at(1));
+      if(parent_ptr == nullptr){
+         // not found
+         throw file_error("rm: " + words.at(1) + 
+                          ": No such file or directory");
+      }
+      else{
+         // extract new dirname from pathname
+         vector<string> path_parts_vec = split(words.at(1), "/");
+         auto path_part = path_parts_vec.end();
+         --path_part;
+         rm_me_ptr = parent_ptr->find(*path_part);
+         if (rm_me_ptr->size() != 0
+             and rm_me_ptr->inode_type() == file_type::DIRECTORY_TYPE)
+         {
+            throw file_error("rm: " + words.at(1)  
+                               +  ": is a non-empty directory");
+         }
+         parent_ptr->rm(*path_part);
+      }
+   }catch(file_error error){
+      cerr << error.what() << endl;
+      exit_status::set (EXIT_FAILURE);
+      
+   }
 }
+
 
 void fn_rmr (inode_state& state, const wordvec& words){
    DEBUGF ('c', state);
