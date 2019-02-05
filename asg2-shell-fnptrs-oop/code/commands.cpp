@@ -1,5 +1,8 @@
 // $Id: commands.cpp,v 1.17 2018-01-25 14:02:55-08 - - $
-
+/*
+ * Partner: Evan Suther (esuther@ucsc.edu)
+ * Partner: Derrick DeBose (ddebose@ucsc.edu)
+ */
 #include "commands.h"
 #include "debug.h"
 
@@ -115,7 +118,8 @@ void fn_cat (inode_state& state, const wordvec& words){
                cout << endl;
             }
          }
-      }catch(file_error error){
+      }
+      catch(file_error error){
          cerr << error.what() << endl;
          exit_status::set (EXIT_FAILURE);
          
@@ -200,28 +204,47 @@ void fn_ls (inode_state& state, const wordvec& words){
       }
       // set final path to dir to print
       final_path = state._wd_();
+      final_path->print_from();
    }
    // split here for multiple args
-   else if (words.at(1)== "/"){
+   else if (words.at(1)== "/" and words.size() == 2){
       // pathname / is root
       cout << "/:" << endl;
       final_path = state._rt_();
+      final_path->print_from();
    }
-   else if (words.size() != 1){
-      // NEED TO DO MULTIPLE ARGS
+   else if (words.size() != 1){//must be able to access path from wd
       inode_ptr working_dir = state._wd_();
-      final_path = deal_with_path_ls(working_dir, words.at(1));
-      if(final_path == nullptr){
-         throw file_error("ls: cannot access " + 
-               words.at(1) + ": No such file or directory");
-      }
-      else{
-         //do a more norm itor go to parts -1
-         cout << words.at(1) <<":" << endl;
+      // NEED TO DEAL MULTIPLE ARGS
+      for (auto pathname = words.begin();
+                pathname != words.end(); ++pathname)
+      {
+         // try/catch in here to continue
+         try{
+            if(pathname == words.begin()){++pathname;} // skip 1st word
+            final_path = deal_with_path_ls(working_dir, *pathname);
+
+            if(final_path == nullptr){
+               throw file_error("ls: cannot access " + 
+                     *pathname + ": No such file or directory");
+            }
+            else{
+               cout << *pathname <<":" << endl;
+               final_path->print_from();
+            }
+            
+         }
+         catch(file_error error){
+            cerr << error.what() << endl;
+            exit_status::set (EXIT_FAILURE);
+            
+         }
+
+         
       }
 
+
    }
-   final_path->print_from();
    // check if ls has operands(directories)
 }
 
