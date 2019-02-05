@@ -1,4 +1,8 @@
-// $Id: debug.h,v 1.1 2019-02-01 22:45:41-08 - - $
+// $Id: debug.h,v 1.10 2018-01-25 14:02:55-08 - - $
+/*
+ * Partner: Evan Suther (esuther@ucsc.edu)
+ * Partner: Derrick DeBose (ddebose@ucsc.edu)
+ */
 
 #ifndef __DEBUG_H__
 #define __DEBUG_H__

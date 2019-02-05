@@ -1,4 +1,8 @@
-// $Id: util.h,v 1.1 2019-02-01 22:45:41-08 - - $
+// $Id: util.h,v 1.12 2016-01-14 16:16:52-08 - - $
+/*
+ * Partner: Evan Suther (esuther@ucsc.edu)
+ * Partner: Derrick DeBose (ddebose@ucsc.edu)
+ */
 
 // util -
 //    A utility class to provide various services not conveniently

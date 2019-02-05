@@ -1,4 +1,8 @@
 // $Id: file_sys.cpp,v 1.6 2018-06-27 14:44:57-07 - - $
+/*
+ * Partner: Evan Suther (esuther@ucsc.edu)
+ * Partner: Derrick DeBose (ddebose@ucsc.edu)
+ */
 
 #include <iostream>
 #include <stdexcept>
@@ -31,6 +35,7 @@ ostream& operator<< (ostream& out, file_type type) {
 inode_state::inode_state() {
    // root is shared ptr to a directory inode
    root = make_shared<inode>(file_type::DIRECTORY_TYPE );
+   // set . and .. for root
    root->get_contents()->set_parent(root);
    root->get_contents()->set_dot(root);
    // cwd is init to root
@@ -41,6 +46,7 @@ inode_state::inode_state() {
 
 const string& inode_state::prompt() const { return prompt_; }
 
+// implements prompt fn
 void inode_state::prompt(const wordvec& words){
    string pr;
    for(size_t i = 1; i != words.size(); ++i){
@@ -49,6 +55,7 @@ void inode_state::prompt(const wordvec& words){
    prompt_ = pr;
 }
 
+// used to change cwd in cd
 void inode_state::set_cwd(inode_ptr final_dir){
    cwd = final_dir;
 }
@@ -98,6 +105,7 @@ size_t inode::size() const{
    return contents->size();
 }
 
+// num_digits is used to figure the amount of spaces needed in ls
 size_t num_digits (size_t);
 size_t num_digits (size_t size){
    size_t num {0};
@@ -124,6 +132,7 @@ size_t num_digits (int size){
    return num;
 }
 
+// returns the spaces for ls formatting
 string _spaces(size_t);
 string _spaces(size_t size){
    string spces = "";
@@ -146,16 +155,6 @@ string inode::find_name(inode_ptr find_me){
    return contents->find_name(find_me);
 }
 
-/*void inode::print_from_rec(inode_ptr from){
-   string path = build_path(from);
-   cout << "/" << dirname <<  ":" << endl;
-   contents->print();
-   vector<inode_ptr> subdirs = contents->get_subdirs();
-   for (inode_ptr inode_itor : subdirs){
-      print_from_rec(inode_itor);
-   }
-}*/
-
 file_type inode::inode_type(){
    return contents->inode_type();
 }
@@ -165,6 +164,7 @@ file_error::file_error (const string& what):
             runtime_error (what) {
 }
 
+// calculates the size of a file for ls
 size_t plain_file::size() const {
    size_t size {0};
    size_t c {1};
@@ -186,6 +186,7 @@ const wordvec& plain_file::readfile() const {
    return data;
 }
 
+// used in make to store file contents in wordvec
 void plain_file::writefile (const wordvec& words) {
    DEBUGF ('i', words);
    if (data.size() != 0)
@@ -199,6 +200,7 @@ void plain_file::writefile (const wordvec& words) {
    DEBUGF('d', "size of file = " << size());
 }
 
+// for OOP 
 void plain_file::remove (const string&) {
    throw file_error ("is a plain file");
 }
@@ -258,6 +260,7 @@ void plain_file::rm(string){
    throw file_error ("RM $$$is a plain file");
 }
 
+// default ctor
 directory::directory(){
    dirents.emplace(".", nullptr);
    dirents.emplace("..", nullptr);
@@ -297,6 +300,7 @@ inode_ptr directory::mkdir (const string& dirname) {
                         dirname + "': File exists");
    }
    dirents.emplace(dirname, t);
+   // increment size, dir size is number of entries
    ++size_;
    DEBUGF('d', "size of working directory = " << size_ << endl);
    return t;
@@ -347,7 +351,6 @@ inode_ptr directory::mkfile (const string& filename) {
 }
 
 void directory::print(){
-   // ************PATHNAME**********:
    string spaces_nr, spaces_size, name;
    size_t nr_digits;
    for (auto itor: dirents){
@@ -357,10 +360,11 @@ void directory::print(){
       size_t tmp_size = itor.second->get_contents()->size();
       size_t size_digits = num_digits(tmp_size);
       spaces_size = _spaces(size_digits);
+      // lol
       name = itor.first + 
          ((itor.second->inode_type() ==file_type::DIRECTORY_TYPE) and
-          (itor.first != "." and itor.first != "..") ?
-            "/" : "");
+          (itor.first != "." and itor.first != "..")              
+          ? "/" : "");
      
       cout << spaces_nr << itor.second->get_inode_nr() << "  "
          << spaces_size << tmp_size << "  " << name << endl;
@@ -374,7 +378,6 @@ void directory::print_recursive(){
    vector<inode_ptr> subdirs = get_subdirs();
    for (auto inode_itor: subdirs){
       inode_itor->get_contents()->print_recursive();
-
    }
 }
 
@@ -382,6 +385,8 @@ file_type directory::inode_type(){
    return file_type::DIRECTORY_TYPE;
 }
 
+// used to free allocated memory for directory
+// gets rid of memory leak 
 void directory::disown(){
    for (auto itor: dirents){
       if (itor.first != ".." and itor.first != ".")
@@ -391,6 +396,7 @@ void directory::disown(){
    dirents.erase("..");
 }
 
+// used to remove an entry in a directory
 void directory::rm(string rm_me){
    auto maybe_me = dirents.find(rm_me);
    if (maybe_me == dirents.end()){
@@ -403,20 +409,24 @@ void directory::rm(string rm_me){
    --size_;
 }
 
+// returns the name of the inode we want to find
 string directory::find_name(inode_ptr find_me) {
    base_file_ptr dir_maybe_me;
    vector<base_file_ptr> subdirs {};
+   // iterate the hash map
    for (auto inode_itor : dirents){
+      // we do not want find these 3 things ever
       if(inode_itor.first != "."  && 
          inode_itor.first != ".." &&
          inode_itor.second != nullptr)
       {
-      
          dir_maybe_me = inode_itor.second->get_contents();
+         // found the inode corresp to the ptr arg find_me
          if (inode_itor.second == find_me){
             DEBUGF('f', "found_name: " << inode_itor.first << endl);
             return inode_itor.first;
          }
+         // still not found push subdirs to check later
          else if (dir_maybe_me->inode_type() == 
                            file_type::DIRECTORY_TYPE)
          {
@@ -425,6 +435,7 @@ string directory::find_name(inode_ptr find_me) {
       }
    }
    string name;
+   // iterate sub directories to see if there is a path to find name
    for (auto subdirs_itor : subdirs){
       name = subdirs_itor->find_name(find_me);
       if (name != ""){
@@ -434,6 +445,7 @@ string directory::find_name(inode_ptr find_me) {
    return "";
 }
 
+//gets all sub directories to be able to check all paths
 vector<inode_ptr> directory::get_subdirs(){
    base_file_ptr maybe_dir;
    vector<inode_ptr> subdirs{};
@@ -453,23 +465,31 @@ vector<inode_ptr> directory::get_subdirs(){
    return subdirs;
 }
 
+//find the parent of the current directory
 inode_ptr directory::get_parent(){
    auto parent = dirents.find("..");
    return parent->second;
 }
 
+//used for printing complete path names
 string directory::build_path(inode_ptr find_me){
    string path{};
+   //parent is parent of current directory
    inode_ptr parent{find_me->get_contents()->get_parent()};
    inode_ptr current{parent};
+   //intialize path to final path we want
    path = '/' + parent->get_contents()->find_name(find_me);
    DEBUGF('q', "this is find me: " << find_me 
       << "this is parent: " << parent << "this is parent's parent"
       << parent->get_contents()->get_parent()<< endl);
+   //parent is equal to itself we are at the root of our tree
    while(parent != parent->get_contents()->get_parent()){
-      //current = parent->get_contents()->get_parent();
+      //iterate parent
       parent = parent->get_contents()->get_parent();
+      // add parent name to path
       path = '/' + parent->get_contents()->find_name(current) + path;
+      //current makes sure we can still access parent
+      //when parent is now the grand parent
       current = parent;
 
       DEBUGF('q', "this is new parent: " << parent << endl);

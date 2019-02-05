@@ -1,4 +1,8 @@
-// $Id: util.cpp,v 1.1 2019-02-01 22:45:41-08 - - $
+// $Id: util.cpp,v 1.11 2016-01-13 16:21:53-08 - - $
+/*
+ * Partner: Evan Suther (esuther@ucsc.edu)
+ * Partner: Derrick DeBose (ddebose@ucsc.edu)
+ */
 
 #include <cstdlib>
 #include <unistd.h>

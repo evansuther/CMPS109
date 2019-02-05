@@ -1,4 +1,8 @@
 // $Id: main.cpp,v 1.9 2016-01-14 16:16:52-08 - - $
+/*
+ * Partner: Evan Suther (esuther@ucsc.edu)
+ * Partner: Derrick DeBose (ddebose@ucsc.edu)
+ */
 
 #include <cstdlib>
 #include <iostream>
@@ -65,13 +69,11 @@ int main (int argc, char** argv) {
                break;
             }
             if (need_echo) cout << line << endl;
-   
             // Split the line into words and lookup the appropriate
             // function.  Complain or call it.
             wordvec words = split (line, " \t");
             DEBUGF ('y', "words = " << words);
-            // current test for comments, line.find() 
-            // might be more robust
+            // test for comments
             if (words.at(0) != "#"){
                command_fn fn = find_command_fn (words.at(0));
                fn (state, words);
@@ -81,6 +83,8 @@ int main (int argc, char** argv) {
             // exn is thrown and printed here.
             complain() << error.what() << endl;
          }catch (file_error& error){
+            // If there is an error in a file, print to err
+            // and change the exit status
             cerr << error.what() << endl;
             exit_status::set(EXIT_FAILURE);
          }
@@ -88,7 +92,6 @@ int main (int argc, char** argv) {
    } catch (ysh_exit&) {
       // This catch intentionally left blank.
    }
-
    return exit_status_message();
 }
 

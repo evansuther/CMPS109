@@ -1,4 +1,8 @@
 // $Id: file_sys.h,v 1.6 2018-06-27 14:44:57-07 - - $
+/*
+ * Partner: Evan Suther (esuther@ucsc.edu)
+ * Partner: Derrick DeBose (ddebose@ucsc.edu)
+ */
 
 #ifndef __INODE_H__
 #define __INODE_H__
@@ -40,14 +44,13 @@ class inode_state {
    public:
       inode_state (const inode_state&) = delete; // copy ctor
       inode_state& operator= (const inode_state&) = delete; // op=
-      inode_state();//default
+      inode_state();// default
       // const on both sides bc member
       // fn defined outside of class definition?
       const string& prompt() const;
       void prompt(const wordvec&);
       void set_cwd(inode_ptr);
       inode_ptr _wd_() {return cwd;}
-
       inode_ptr _rt_() {return root;}
 
 };

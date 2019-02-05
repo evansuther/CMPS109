@@ -3,6 +3,7 @@
  * Partner: Evan Suther (esuther@ucsc.edu)
  * Partner: Derrick DeBose (ddebose@ucsc.edu)
  */
+
 #include "commands.h"
 #include "debug.h"
 
@@ -43,7 +44,7 @@ int exit_status_message() {
    return exit_status;
 }
 
-//Need to get the last thing in the path
+// Need to get the last thing in the path
 inode_ptr deal_with_path_ls(inode_ptr wd, const string& path){
    if (path == "/"){
       return wd;
@@ -64,7 +65,7 @@ inode_ptr deal_with_path_ls(inode_ptr wd, const string& path){
    }
 }
 
-//Need to get second to last thing in path
+// Need to get second to last thing in path
 inode_ptr deal_with_path_mk(inode_ptr wd, const string& path){
    if (path == "/"){
       return wd;
@@ -100,29 +101,34 @@ void fn_cat (inode_state& state, const wordvec& words){
          itor != words.end(); ++itor)
    {
       try{
-         if(itor == words.begin()){++itor;} // skip first word
+         if(itor == words.begin()){++itor;} // skip first word 'cat'
          // try to find ptr to file
          final_path = deal_with_path_ls(state._wd_(), *itor);
+         // if path is not found final_path is a nullptr
          if(final_path == nullptr){
             // not found
             throw file_error("cat: " + *itor + 
                              ": No such file or directory");
          }
+         // we can not print a directory
+         // wrong type
          else if(final_path->inode_type() == file_type::DIRECTORY_TYPE)
-         { //wrong type
+         {
             throw file_error("cat: " + *itor + ": Is a directory");
          }
          else{
+            // print the contents of file
             cout << final_path->get_contents()->readfile();
+            // print a new line after printing out file
             if(final_path->size() != 0){
                cout << endl;
             }
          }
       }
       catch(file_error error){
+         // catch an error here to be able print multiple paths
          cerr << error.what() << endl;
          exit_status::set (EXIT_FAILURE);
-         
       }
    }
 }
@@ -131,6 +137,7 @@ void fn_cat (inode_state& state, const wordvec& words){
 void fn_cd (inode_state& state, const wordvec& words){
    DEBUGF ('c', state);
    DEBUGF ('c', words);
+   // if cd the only thing on line, CWD is now root
    if (words.size() == 1){
       state.set_cwd(state._rt_());
    }
@@ -144,23 +151,24 @@ void fn_cd (inode_state& state, const wordvec& words){
       state.set_cwd(state._rt_());
    }
    else{
+      // find a path from working directory
       inode_ptr final_dir = 
             deal_with_path_ls(state._wd_(), words.at(1));
       if(final_dir == nullptr){
+         // no path found
          throw command_error
                 ("cd: " + words.at(1) + ": No such file or directory");
       }
       else if(final_dir->inode_type() == file_type::PLAIN_TYPE)
-         { //wrong type
-            throw file_error
-                        ("cd: " + words.at(1) + ": Not a directory");
-         }
+      { 
+         // wrong type
+         throw command_error
+                 ("cd: " + words.at(1) + ": Not a directory");
+      }
       else{
          state.set_cwd(final_dir);
       }
-      
    }
-   
 }
 
 void fn_echo (inode_state& state, const wordvec& words){
@@ -181,6 +189,7 @@ void fn_exit (inode_state& state, const wordvec& words){
          ex_st = 127;
    }
    exit_status::set(ex_st);
+   state._rt_()->get_contents()->disown();
    throw ysh_exit();
 }
 
@@ -206,48 +215,45 @@ void fn_ls (inode_state& state, const wordvec& words){
       final_path = state._wd_();
       final_path->print_from();
    }
-   // split here for multiple args
    else if (words.at(1)== "/" and words.size() == 2){
       // pathname / is root
       cout << "/:" << endl;
       final_path = state._rt_();
       final_path->print_from();
    }
-   else if (words.size() != 1){//must be able to access path from wd
+   else if (words.size() != 1){
+      // must be able to access path from wd
       inode_ptr working_dir = state._wd_();
-      // NEED TO DEAL MULTIPLE ARGS
+      // deal with all pathnames
       for (auto pathname = words.begin();
                 pathname != words.end(); ++pathname)
       {
-         // try/catch in here to continue
          try{
             if(pathname == words.begin()){++pathname;} // skip 1st word
             final_path = deal_with_path_ls(working_dir, *pathname);
 
             if(final_path == nullptr){
+               // no path found
                throw file_error("ls: cannot access " + 
                      *pathname + ": No such file or directory");
             }
             else{
+               // print path and ls contents
                cout << *pathname <<":" << endl;
                final_path->print_from();
             }
-            
          }
          catch(file_error error){
+            // caught here to be able to looks at mulitlpe dirs in line
             cerr << error.what() << endl;
-            exit_status::set (EXIT_FAILURE);
-            
-         }
-
-         
+            exit_status::set (EXIT_FAILURE);  
+         }  
       }
-
-
    }
-   // check if ls has operands(directories)
 }
 
+// used in lsr to print subdirectories recursively
+// subdirectories will print their pathname and contents
 void print_subdirs(vector<inode_ptr>);
 void print_subdirs(vector<inode_ptr> subdirs){
    for(auto itor : subdirs){
@@ -271,8 +277,7 @@ void fn_lsr (inode_state& state, const wordvec& words){
          cout << dirname <<  ":" << endl;
       }
       else{
-         //no args and at root
-         dirname = "";
+         // no args and at root
          cout << "/:" << endl;
       }
       // set final path to dir to print
@@ -284,8 +289,7 @@ void fn_lsr (inode_state& state, const wordvec& words){
 
    }
    else if (words.at(1)== "/"){
-      //need to print from root
-      dirname = "";
+      // need to print from root
       cout << "/:" << endl;
       final_path = state._rt_();
       subdirs = final_path->get_contents()->get_subdirs();
@@ -293,44 +297,28 @@ void fn_lsr (inode_state& state, const wordvec& words){
       print_subdirs(subdirs);
    }
    else if (words.size() != 1){
-      // NEED TO DO MULTIPLE ARGS
       inode_ptr working_dir = state._wd_();
+      // Handle each pathname in words
       for (auto pathname = words.begin();
                 pathname != words.end(); ++pathname)
       {
-         if(pathname == words.begin()){++pathname;} // skip first word
+         if(pathname == words.begin()){++pathname;} // skip 1st word
          // try to find ptr to file
          final_path = deal_with_path_ls(working_dir, *pathname);
-         if(final_path == nullptr){
+         if(final_path == nullptr){//path not found
             throw file_error("lsr: cannot access " + 
                   *pathname + ": No such file or directory");
          }
          else{
+            // found a path
             subdirs = 
                final_path->get_contents()->get_subdirs();
-            //wordvec parts = split(*pathname, "/");
-            //make an itor to go to parts -1
-            //dirname = *pathname;
             cout << "/" << *pathname <<  ":" << endl;
             final_path->print_from();
             print_subdirs(subdirs);
          }
       }
-
    }
-  /* if(dirname == ""){
-      cout << "/:" << endl;
-   }else{
-      cout << dirname <<  ":" << endl;
-   }
-   
-   final_path->print_from();
-
-   for(auto itor : subdirs){
-      dirname = itor->get_contents()->build_path(itor);
-      //cout << dirname <<  ":" << endl;
-      itor->get_contents()->print_recursive();
-   } */
 }
 
 void fn_make (inode_state& state, const wordvec& words){
@@ -349,7 +337,7 @@ void fn_make (inode_state& state, const wordvec& words){
       parent_ptr = deal_with_path_mk(parent_ptr, words.at(1));
       // no parent directory found, bad pathname
       if(parent_ptr == nullptr){
-         throw file_error("make: cannot create directory '" + 
+         throw file_error("make: cannot create '" + 
                   words.at(1) + "': No such file or directory");
       }
 
@@ -368,8 +356,6 @@ void fn_make (inode_state& state, const wordvec& words){
       throw file_error("make: " + words.at(1) + ": " + error.what());
    }
 }
-
-
 
 void fn_mkdir (inode_state& state, const wordvec& words){
    DEBUGF ('c', state);
@@ -423,7 +409,7 @@ void fn_rm (inode_state& state, const wordvec& words){
    DEBUGF ('c', state);
    DEBUGF ('c', words);
 
-   // get to parent pointer, remove final thing in path from parentInode
+   // get to parent pointer, rm final thing in path from parentInode
    // then disown pointer to thing
 
    // error for pathname to not exist
@@ -440,12 +426,13 @@ void fn_rm (inode_state& state, const wordvec& words){
       rm_me_ptr = deal_with_path_ls(state._wd_(), words.at(1));
       if(parent_ptr == nullptr or rm_me_ptr == nullptr){
          // not found
-         throw file_error("rm: " + words.at(1) + 
-                          ": No such file or directory");
+         throw file_error("rm: cannot remove '" + words.at(1) + 
+                          "': No such file or directory");
       }
       else{
          // extract new dirname from pathname
          string name = parent_ptr->find_name(rm_me_ptr);
+         // rm cannot rm non-empty directories
          if (rm_me_ptr->size() != 2
              and rm_me_ptr->inode_type() == file_type::DIRECTORY_TYPE)
          {
@@ -457,7 +444,6 @@ void fn_rm (inode_state& state, const wordvec& words){
    }catch(file_error error){
       cerr << error.what() << endl;
       exit_status::set (EXIT_FAILURE);
-      
    }
 }
 
@@ -465,11 +451,10 @@ void fn_rm (inode_state& state, const wordvec& words){
 void fn_rmr (inode_state& state, const wordvec& words){
    DEBUGF ('c', state);
    DEBUGF ('c', words);
-   // get to parent pointer, remove final thing in path from parentInode
+   // get to parent pointer, rm final thing in path from parentInode
    // then disown pointer to thing
 
    // error for pathname to not exist
-   // if directory, must be empty, else error
    #define _FILE_DNE_ ": No such file or directory"
 
    if(words.size() <= 1) {
@@ -477,7 +462,7 @@ void fn_rmr (inode_state& state, const wordvec& words){
    }
    inode_ptr parent_ptr, rm_me_ptr;
    try{
-         // try to find ptr to file
+      // try to find ptr to file
       parent_ptr = deal_with_path_mk(state._wd_(), words.at(1));
       rm_me_ptr = deal_with_path_ls(state._wd_(), words.at(1));
       if(parent_ptr == nullptr or rm_me_ptr == nullptr){

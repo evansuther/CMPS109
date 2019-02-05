@@ -1,4 +1,8 @@
-// $Id: commands.h,v 1.1 2019-02-01 22:45:41-08 - - $
+// $Id: commands.h,v 1.11 2016-01-14 14:45:21-08 - - $
+/*
+ * Partner: Evan Suther (esuther@ucsc.edu)
+ * Partner: Derrick DeBose (ddebose@ucsc.edu)
+ */
 
 #ifndef __COMMANDS_H__
 #define __COMMANDS_H__

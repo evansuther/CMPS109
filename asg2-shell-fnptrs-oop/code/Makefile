@@ -1,4 +1,6 @@
 # $Id: Makefile,v 1.30 2019-01-10 14:01:36-08 - - $
+# Partner: Evan Suther (esuther@ucsc.edu)
+# Partner: Derrick DeBose (ddebose@ucsc.edu)
 
 MKFILE      = Makefile
 DEPFILE     = ${MKFILE}.dep
@@ -20,6 +22,8 @@ MODULESRC   = ${foreach MOD, ${MODULES}, ${MOD}.h ${MOD}.cpp}
 OTHERSRC    = ${filter-out ${MODULESRC}, ${CPPHEADER} ${CPPSOURCE}}
 ALLSOURCES  = ${MODULESRC} ${OTHERSRC} ${MKFILE}
 LISTING     = Listing.ps
+EXTRASRC 	= PARTNER README Makefile
+GRINDARGS 	= <test2.ysh 1>grind.out 2>grind.err
 
 all : ${EXECBIN}
 
@@ -57,13 +61,11 @@ again :
 	${GMAKE} spotless dep ci all lis
 
 grind	:	${EXECBIN}
-	valgrind --leak-check=full ./${EXECBIN} <test2.ysh 1>grind.out 2>grind.err
+	valgrind --leak-check=full ./${EXECBIN} ${GRINDARGS}
 
 submit	: 
-	submit cmps109-wm.w19 asg2 PARTNER README Makefile ${CPPSOURCE} ${CPPHEADER}
-
+	submit cmps109-wm.w19 asg2 ${EXTRASRC} ${CPPSOURCE} ${CPPHEADER}
 
 ifeq (${NEEDINCL}, )
 include ${DEPFILE}
 endif
-
