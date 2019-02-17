@@ -1,5 +1,8 @@
 // $Id: listmap.h,v 1.14 2018-02-20 14:59:38-08 - - $
-
+/*
+ * Partner: Evan Suther (esuther@ucsc.edu)
+ * Partner: Derrick DeBose (ddebose@ucsc.edu)
+ */
 #ifndef __LISTMAP_H__
 #define __LISTMAP_H__
 
@@ -37,7 +40,7 @@ class listmap {
       iterator erase (iterator position);
       iterator begin() { return anchor()->next; }
       iterator end() { return anchor(); }
-      bool empty() const { return begin() == end(); }
+      bool empty() { return begin() == end(); }
 };
 
 

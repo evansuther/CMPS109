@@ -1,4 +1,8 @@
 // $Id: listmap.tcc,v 1.11 2018-01-25 14:19:14-08 - - $
+/*
+ * Partner: Evan Suther (esuther@ucsc.edu)
+ * Partner: Derrick DeBose (ddebose@ucsc.edu)
+ */
 
 #include "listmap.h"
 #include "debug.h"
@@ -39,31 +43,42 @@ listmap<Key,Value,Less>::~listmap() {
 template <typename Key, typename Value, class Less>
 typename listmap<Key,Value,Less>::iterator
 listmap<Key,Value,Less>::insert (const value_type& pair) {
-   DEBUGF ('l', &pair << "->" << pair);
-   /*str_str_map::iterator itor = test.begin();
-   while (itor xless test.end(); ++itor) {
-      if(test.begin()==test.end()){//is empty
-         anchor().prev = 
-      }
-   }*/
-   node* curr = *anchor_.anchor();
-   node temp;
-   while (curr != anchor_->next and 
-            less ((*curr)->value_type->key, pair.first)) {
-      curr = &(*curr)->next;
+   DEBUGF ('l',"&pair="<< &pair << "->" << pair << endl);
+
+   node* temp;
+   if (empty()) {
+      temp = new node(end().where, end().where, pair);
+      end().where->next = temp;
+      end().where->prev = temp;
+
+      DEBUGF('i', "empty case ==> begin() = " << *begin() << endl);
+
+      return begin();
    }
-   if(curr == anchor_->end){
+
+   // probably a node* ?
+   DEBUGF('i',"begin() == end : " << (begin() == end()) << endl);
+   auto curr = begin();
+   while (curr != end() and 
+            less ( curr->first, pair.first)) {
+      ++curr;
+      DEBUGF('i', "curr =" << &curr);
+   }
+   if(curr == end()){
       //need to insert at end of list, so must update anchor.prev
-      temp = new node( &anchor_, &curr, pair);
-      anchor_->prev = curr;
-      curr-> next = &temp;
-      
+      temp = new node(end().where, (--end()).where, pair);
+      (--curr).where->next = temp;
+      end().where->prev = temp;
+      //curr.where-> prev = temp;
+      DEBUGF('i', "curr =" << &curr);
    }
-   else if(less (*curr)->value_type, pair ){
+   //if(less (curr->first, pair.first) )
+   else  {
       //inserting in the middle of list
-      temp = new node(curr->next, &curr, pair);
-      curr->next = &temp;
-      
+      temp = new node(curr.where, curr.where->prev, pair);
+      temp->prev->next = temp;
+      curr.where->prev = temp;
+      DEBUGF('i', "curr =" << &curr);
    }
    return curr;
 }

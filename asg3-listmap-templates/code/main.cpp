@@ -1,4 +1,8 @@
 // $Id: main.cpp,v 1.11 2018-01-25 14:19:29-08 - - $
+/*
+ * Partner: Evan Suther (esuther@ucsc.edu)
+ * Partner: Derrick DeBose (ddebose@ucsc.edu)
+ */
 
 #include <cstdlib>
 #include <exception>
@@ -41,78 +45,146 @@ int main (int argc, char** argv) {
    regex key_value_regex {R"(^\s*(.*?)\s*=\s*(.*?)\s*$)"};
    regex trimmed_regex {R"(^\s*([^=]+?)\s*$)"};
    str_str_map test;
-   //will not enter loop if no files are given
-   for (char** argp = &argv[optind]; argp != &argv[argc]; ++argp) {
-      //test.prompt(argp);
-      std::fstream fs;
-      string curr = *argp;
-      string line;
-      fs.open (curr, std::fstream::ios_base::in);
-      int counter = 1;
-      str_str_pair pair{};
-      if(fs.is_open()){
-         while ( getline (fs, line) ){
-            //read each file line by line
-            if (fs.eof()) break;
-            cout << argp << ": "<< counter << ": " << line << endl;
-            ++counter;
-            smatch result;
-            //if found comment line
-            if (regex_search (line, result, comment_regex)) {
-               cout << "Comment or empty line." << endl;
-               continue;
+   char** argp = &argv[optind];
+   string line;
+   int counter;
+   if(argp ==  &argv[argc]){
+      counter = 1;
+      while( getline(cin, line) ){
+         if (cin.eof()) break;
+         cout << "-: "<< counter << ": " << line << endl;
+         ++counter;
+         smatch result;
+         //if found comment line
+         if (regex_search (line, result, comment_regex)) {
+            cout << "Comment or empty line." << endl;
+            continue;
+         }
+         //if found '=' in line
+         if (regex_search (line, result, key_value_regex)) {
+            cout << "key  : \"" << result[1] << "\"" << endl;
+            cout << "value: \"" << result[2] << "\"" << endl;
+            if(result[1] == "" and result[2] == ""){
+               //print listmap
+               DEBUGF('s', "this is key: " << result[1] <<
+                           " this is value: " << result[2]);
             }
-            //if found '=' in line
-            if (regex_search (line, result, key_value_regex)) {
-               cout << "key  : \"" << result[1] << "\"" << endl;
-               cout << "value: \"" << result[2] << "\"" << endl;
-               if(result[1] == "" and result[2] == ""){
-                  //print listmap
-                  DEBUGF('s', "this is key: " << result[1] <<
-                              " this is value: " << result[2]);
-               }
-               else if(result[1] == ""){
-                  //find by value and print value
-                  DEBUGF('s', "this is key: " << result[1] <<
-                              " this is value: " << result[2]);
-               }
-               else if(result[2] == ""){
-                  //see if key is in listmap
-                  //if in key map delete node
-                  //else error no key to be deleted??
-                  DEBUGF('s', "this is key: " << result[1] <<
-                              " this is value: " << result[2]);
-               }
-               else{
-                  //first see if key is in listmap
-                  // if in there replace value
-                  // else insert key value
-                  DEBUGF('s', "this is key: " << result[1] <<
-                              " this is value: " << result[2]);
-                  pair = str_str_pair(result[1], result[2]);
-                  test.insert(pair);
-               }
+            else if(result[1] == ""){
+               //find by value and print value
+               DEBUGF('s', "this is key: " << result[1] <<
+                           " this is value: " << result[2]);
             }
-            //need to check if this is a key
-            else if (regex_search (line, result, trimmed_regex)) {
-               cout << "query: \"" << result[1] << "\"" << endl;
-               //iterator temp = test.find(result[1]);
-               //if(temp == end()){
-                  //thing not found
-                  //cerr << result[1] << ": key not found";
-               //}
-               //else{
-               //   temp.print_value();
-               //}
+            else if(result[2] == ""){
+               //see if key is in listmap
+               //if in key map delete node
+               //else error no key to be deleted??
+               DEBUGF('s', "this is key: " << result[1] <<
+                           " this is value: " << result[2]);
+            }
+            else{
+               //first see if key is in listmap
+               // if in there replace value
+               // else insert key value
+               DEBUGF('s', "this is key: " << result[1] <<
+                           " this is value: " << result[2]);
+               str_str_pair pair(result[1], result[2]);
+               test.insert(pair);
             }
          }
-      }else{// file did not print
-         //cerr << complain();
+         //need to check if this is a key
+         else if (regex_search (line, result, trimmed_regex)) {
+            cout << "query: \"" << result[1] << "\"" << endl;
+            //iterator temp = test.find(result[1]);
+            //if(temp == end()){
+               //thing not found
+               //cerr << result[1] << ": key not found";
+            //}
+            //else{
+            //   temp.print_value();
+            //}
+         }
+      } // must free up listmap
+   }
+   else{
+      //will not enter loop if no files are given
+      for (; argp != &argv[argc]; ++argp) {
+         //test.prompt(argp);
+         std::fstream fs;
+         string curr = *argp;
+         
+         fs.open (curr, std::fstream::ios_base::in);
+         counter = 1;
+         //str_str_pair pair;
+         if(fs.is_open()){
+            while ( getline (fs, line) ){
+               //read each file line by line
+               if (fs.eof()) break;
+               cout << argp << ": "<< counter << ": " << line << endl;
+               ++counter;
+               smatch result;
+               //if found comment line
+               if (regex_search (line, result, comment_regex)) {
+                  cout << "Comment or empty line." << endl;
+                  continue;
+               }
+               //if found '=' in line
+               if (regex_search (line, result, key_value_regex)) {
+                  cout << "key  : \"" << result[1] << "\"" << endl;
+                  cout << "value: \"" << result[2] << "\"" << endl;
+                  if(result[1] == "" and result[2] == ""){
+                     //print listmap
+                     DEBUGF('s', "this is key: " << result[1] <<
+                                 " this is value: " << result[2]);
+                     for (str_str_map::iterator itor = test.begin();
+                           itor != test.end(); ++itor) {
+                        cout << itor->first << " = " << itor->second
+                         << endl;
+                     }
+                  }
+                  else if(result[1] == ""){
+                     //find by value and print value
+                     DEBUGF('s', "this is key: " << result[1] <<
+                                 " this is value: " << result[2]);
+                  }
+                  else if(result[2] == ""){
+                     //see if key is in listmap
+                     //if in key map delete node
+                     //else error no key to be deleted??
+                     DEBUGF('s', "this is key: " << result[1] <<
+                                 " this is value: " << result[2]);
+                  }
+                  else{
+                     //first see if key is in listmap
+                     // if in there replace value
+                     // else insert key value
+                     DEBUGF('s', "this is key: " << result[1] <<
+                                 " this is value: " << result[2]);
+                     str_str_pair pair(result[1], result[2]);
+                     test.insert(pair);
+                     cout << result[1] << " = " << result[2] << endl;
+                  }
+               }
+               //need to check if this is a key
+               else if (regex_search (line, result, trimmed_regex)) {
+                  cout << "query: \"" << result[1] << "\"" << endl;
+                  //iterator temp = test.find(result[1]);
+                  //if(temp == end()){
+                     //thing not found
+                     //cerr << result[1] << ": key not found";
+                  //}
+                  //else{
+                  //   temp.print_value();
+                  //}
+               }
+            }// must free up listmap
+         }else{// file did not print
+            //cerr << complain();
+         }
+         //str_str_pair pair (*argp, to_string<int> (argp - argv));
+         //cout << "Before insert: " << pair << endl;
+         //test.insert (pair);
+         fs.close();
       }
-      //str_str_pair pair (*argp, to_string<int> (argp - argv));
-      //cout << "Before insert: " << pair << endl;
-      //test.insert (pair);
-      fs.close();
    }
 
    //must have things in listmap first to enter???????????????????????
