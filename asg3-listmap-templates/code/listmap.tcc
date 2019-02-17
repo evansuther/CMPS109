@@ -1,8 +1,5 @@
 // $Id: listmap.tcc,v 1.11 2018-01-25 14:19:14-08 - - $
-/*
- * Partner: Evan Suther (esuther@ucsc.edu)
- * Partner: Derrick DeBose (ddebose@ucsc.edu)
- */
+
 #include "listmap.h"
 #include "debug.h"
 
@@ -43,7 +40,32 @@ template <typename Key, typename Value, class Less>
 typename listmap<Key,Value,Less>::iterator
 listmap<Key,Value,Less>::insert (const value_type& pair) {
    DEBUGF ('l', &pair << "->" << pair);
-   return iterator();
+   /*str_str_map::iterator itor = test.begin();
+   while (itor xless test.end(); ++itor) {
+      if(test.begin()==test.end()){//is empty
+         anchor().prev = 
+      }
+   }*/
+   node* curr = *anchor_.anchor();
+   node temp;
+   while (curr != anchor_->next and 
+            less ((*curr)->value_type->key, pair.first)) {
+      curr = &(*curr)->next;
+   }
+   if(curr == anchor_->end){
+      //need to insert at end of list, so must update anchor.prev
+      temp = new node( &anchor_, &curr, pair);
+      anchor_->prev = curr;
+      curr-> next = &temp;
+      
+   }
+   else if(less (*curr)->value_type, pair ){
+      //inserting in the middle of list
+      temp = new node(curr->next, &curr, pair);
+      curr->next = &temp;
+      
+   }
+   return curr;
 }
 
 //

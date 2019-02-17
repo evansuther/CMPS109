@@ -1,8 +1,5 @@
 // $Id: main.cpp,v 1.11 2018-01-25 14:19:29-08 - - $
-/*
- * Partner: Evan Suther (esuther@ucsc.edu)
- * Partner: Derrick DeBose (ddebose@ucsc.edu)
- */
+
 #include <cstdlib>
 #include <exception>
 #include <iostream>
@@ -44,7 +41,6 @@ int main (int argc, char** argv) {
    regex key_value_regex {R"(^\s*(.*?)\s*=\s*(.*?)\s*$)"};
    regex trimmed_regex {R"(^\s*([^=]+?)\s*$)"};
    str_str_map test;
-   DEBUGF('s', "debug test" << endl);
    //will not enter loop if no files are given
    for (char** argp = &argv[optind]; argp != &argv[argc]; ++argp) {
       //test.prompt(argp);
@@ -53,6 +49,7 @@ int main (int argc, char** argv) {
       string line;
       fs.open (curr, std::fstream::ios_base::in);
       int counter = 1;
+      str_str_pair pair{};
       if(fs.is_open()){
          while ( getline (fs, line) ){
             //read each file line by line
@@ -63,17 +60,50 @@ int main (int argc, char** argv) {
             //if found comment line
             if (regex_search (line, result, comment_regex)) {
                cout << "Comment or empty line." << endl;
-               DEBUGF('s', "Comment or empty line" << endl);
                continue;
             }
             //if found '=' in line
             if (regex_search (line, result, key_value_regex)) {
                cout << "key  : \"" << result[1] << "\"" << endl;
                cout << "value: \"" << result[2] << "\"" << endl;
+               if(result[1] == "" and result[2] == ""){
+                  //print listmap
+                  DEBUGF('s', "this is key: " << result[1] <<
+                              " this is value: " << result[2]);
+               }
+               else if(result[1] == ""){
+                  //find by value and print value
+                  DEBUGF('s', "this is key: " << result[1] <<
+                              " this is value: " << result[2]);
+               }
+               else if(result[2] == ""){
+                  //see if key is in listmap
+                  //if in key map delete node
+                  //else error no key to be deleted??
+                  DEBUGF('s', "this is key: " << result[1] <<
+                              " this is value: " << result[2]);
+               }
+               else{
+                  //first see if key is in listmap
+                  // if in there replace value
+                  // else insert key value
+                  DEBUGF('s', "this is key: " << result[1] <<
+                              " this is value: " << result[2]);
+                  pair = str_str_pair(result[1], result[2]);
+                  test.insert(pair);
+               }
             }
             //need to check if this is a key
             else if (regex_search (line, result, trimmed_regex)) {
                cout << "query: \"" << result[1] << "\"" << endl;
+               //iterator temp = test.find(result[1]);
+               //if(temp == end()){
+                  //thing not found
+                  //cerr << result[1] << ": key not found";
+               //}
+               //else{
+               //   temp.print_value();
+               //}
             }
          }
       }else{// file did not print
