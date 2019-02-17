@@ -90,7 +90,13 @@ template <typename Key, typename Value, class Less>
 typename listmap<Key,Value,Less>::iterator
 listmap<Key,Value,Less>::find (const key_type& that) {
    DEBUGF ('l', that);
-   return iterator();
+   auto itor = begin();
+   for (; itor != end(); ++itor) {
+      if(itor->first == that){
+         return itor;
+      }
+   }
+   return end();
 }
 
 //
@@ -100,8 +106,13 @@ template <typename Key, typename Value, class Less>
 typename listmap<Key,Value,Less>::iterator
 listmap<Key,Value,Less>::erase (iterator position) {
    DEBUGF ('l', &*position);
-   return iterator();
+   iterator temp = ++position;
+   (--position).where->next = position.where->next;
+   (++position).where->prev = position.where->prev;
+   delete position.where;
+   return temp;
 }
+
 
 
 //
