@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.21 2018-07-12 16:10:53-07 - - $
+# $Id: Makefile,v 1.1 2019-02-17 15:37:07-08 - - $
 
 # Partner: Evan Suther (esuther@ucsc.edu)
 # Partner: Derrick DeBose (ddebose@ucsc.edu)
@@ -57,6 +57,13 @@ ${DEPFILE} :
 
 again :
 	${GMAKE} spotless dep ci all lis
+
+test : 
+	${GMAKE} spotless dep all
+	./mk.tests
+
+show :
+	perl pkeyvalue.perl test1.in test2.in test3.in
 
 ifeq (${NEEDINCL}, )
 include ${DEPFILE}

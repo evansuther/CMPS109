@@ -1,4 +1,4 @@
-// $Id: main.cpp,v 1.11 2018-01-25 14:19:29-08 - - $
+// $Id: main.cpp,v 1.1 2019-02-17 15:37:07-08 - - $
 /*
  * Partner: Evan Suther (esuther@ucsc.edu)
  * Partner: Derrick DeBose (ddebose@ucsc.edu)
@@ -20,7 +20,8 @@ using namespace std;
 
 using str_str_map = listmap<string,string>;
 using str_str_pair = str_str_map::value_type;
-using str_key_type = str_str_map::key_type;
+//using str_key = str_str_map::key_type;
+
 void scan_options (int argc, char** argv) {
    opterr = 0;
    for (;;) {
@@ -81,8 +82,11 @@ void deal_with_lines(str_str_map& my_map, istream& instream,
             str_str_map::key_type temp = result[1];
 
             itor = my_map.find(temp);
+            DEBUGF('s', "itor: " << *itor);
             if ( itor == my_map.end() ){
-               cout << result[1] << ": key not found";
+               cout << result[1] << ": key not found" << endl;
+               DEBUGF('s', "this is key: " << result[1] <<
+                        " this is value: " << result[2]);
             }
             else{
                my_map.erase(itor);
@@ -94,8 +98,19 @@ void deal_with_lines(str_str_map& my_map, istream& instream,
             // else insert key value
             DEBUGF('s', "this is key: " << result[1] <<
                         " this is value: " << result[2]);
-            str_str_pair pair(result[1], result[2]);
-            my_map.insert(pair);
+            str_str_map::iterator itor = my_map.begin();
+            str_str_map::key_type temp = result[1];
+            itor = my_map.find(temp);
+            if(itor == my_map.end()){
+               str_str_pair pair(result[1], result[2]);
+               my_map.insert(pair);
+            }
+            else{//if key found in map then replace
+               my_map.erase(itor);
+               str_str_pair pair(result[1], result[2]);
+               my_map.insert(pair);
+            }
+            cout << result[1] << " = " << result[2] << endl;
          }
       }
       //need to check if this is a key
@@ -151,11 +166,9 @@ int main (int argc, char** argv) {
       cout << "During iteration: " << *itor << endl;
    }
 
-   for (str_str_map::iterator itor = my_map.begin();
-        itor != my_map.end(); ++itor) {
-      my_map.erase (itor);
+   while (not (my_map.empty())){
+      my_map.erase (my_map.begin());
    }
-
 
    cout << "EXIT_SUCCESS" << endl;
    return EXIT_SUCCESS;

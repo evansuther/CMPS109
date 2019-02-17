@@ -1,4 +1,4 @@
-// $Id: listmap.tcc,v 1.11 2018-01-25 14:19:14-08 - - $
+// $Id: listmap.tcc,v 1.1 2019-02-17 15:37:07-08 - - $
 /*
  * Partner: Evan Suther (esuther@ucsc.edu)
  * Partner: Derrick DeBose (ddebose@ucsc.edu)
@@ -82,7 +82,6 @@ listmap<Key,Value,Less>::insert (const value_type& pair) {
    }
    return curr;
 }
-
 //
 // listmap::find(const key_type&)
 //
@@ -91,13 +90,19 @@ typename listmap<Key,Value,Less>::iterator
 listmap<Key,Value,Less>::find (const key_type& that) {
    DEBUGF ('l', that);
    auto itor = begin();
-   for (; itor != end(); ++itor) {
-      if(itor->first == that){
-         return itor;
+   if(empty()){
+      return end();
+   }
+   else{
+      for (; itor != end(); ++itor) {
+         if(itor->first == that){
+            return itor;
+         }
       }
    }
    return end();
 }
+
 
 //
 // iterator listmap::erase (iterator position)
@@ -106,12 +111,22 @@ template <typename Key, typename Value, class Less>
 typename listmap<Key,Value,Less>::iterator
 listmap<Key,Value,Less>::erase (iterator position) {
    DEBUGF ('l', &*position);
-   iterator temp = ++position;
-   (--position).where->next = position.where->next;
-   (++position).where->prev = position.where->prev;
-   delete position.where;
-   return temp;
+   if(empty()){
+      return end();
+   }
+   else{
+      //make pointer to position.where->next and directly reference
+      node* next_prev = position.where->next;
+      node* prev_next = position.where->prev;
+      next_prev->prev = prev_next;
+      prev_next->next = next_prev;
+      delete position.where;
+      return iterator(next_prev);
+      
+   }
+   return end();
 }
+
 
 
 
