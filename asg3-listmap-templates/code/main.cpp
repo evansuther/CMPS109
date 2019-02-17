@@ -116,13 +116,10 @@ void deal_with_lines(str_str_map& my_map, istream& instream,
 int main (int argc, char** argv) {
    sys_info::execname (argv[0]);
    scan_options (argc, argv);
-   regex comment_regex {R"(^\s*(#.*)?$)"};
-   regex key_value_regex {R"(^\s*(.*?)\s*=\s*(.*?)\s*$)"};
-   regex trimmed_regex {R"(^\s*([^=]+?)\s*$)"};
+
    str_str_map my_map;
    char** argp = &argv[optind];
-   //string line;
-   //int counter;
+
    if(argp ==  &argv[argc]){
       deal_with_lines(my_map, cin, "-");
    }
