@@ -20,7 +20,7 @@ using namespace std;
 
 using str_str_map = listmap<string,string>;
 using str_str_pair = str_str_map::value_type;
-//using str_key = str_str_map::key_type;
+using str_key = str_str_map::key_type;
 
 void scan_options (int argc, char** argv) {
    opterr = 0;
@@ -64,7 +64,7 @@ void deal_with_lines(str_str_map& my_map, istream& instream,
             //print listmap
             DEBUGF('s', "this is key: " << result[1] <<
                         " this is value: " << result[2]);
-            for (str_str_map::iterator itor = my_map.begin();
+            for (auto itor = my_map.begin();
                   itor != my_map.end(); ++itor) {
                cout << itor->first << " = " << itor->second << endl;
             }
@@ -79,8 +79,8 @@ void deal_with_lines(str_str_map& my_map, istream& instream,
             //see if key is in listmap
             DEBUGF('s', "this is key: " << result[1] <<
                         " this is value: " << result[2]);
-            str_str_map::iterator itor = my_map.begin();
-            str_str_map::key_type temp = result[1];
+            auto itor = my_map.begin();
+            str_key temp = result[1];
 
             itor = my_map.find(temp);
             DEBUGF('s', "itor: " << *itor);
@@ -101,8 +101,8 @@ void deal_with_lines(str_str_map& my_map, istream& instream,
             // else insert key value
             DEBUGF('s', "this is key: " << result[1] <<
                         " this is value: " << result[2]);
-            str_str_map::iterator itor = my_map.begin();
-            str_str_map::key_type temp = result[1];
+            auto itor = my_map.begin();
+            str_key temp = result[1];
             itor = my_map.find(temp);
             if(itor == my_map.end()){
                str_str_pair pair(result[1], result[2]);
@@ -120,7 +120,7 @@ void deal_with_lines(str_str_map& my_map, istream& instream,
       else if (regex_search (line, result, trimmed_regex)) {
          // find key in map
          auto itor = my_map.begin();
-         str_str_map::key_type temp = result[1];
+         str_key temp = result[1];
          itor = my_map.find(temp);
          //check to see if key was found or now
          if(itor == my_map.end()){

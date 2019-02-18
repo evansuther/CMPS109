@@ -115,13 +115,13 @@ listmap<Key,Value,Less>::erase (iterator position) {
       return end();
    }
    else{
-      //make pointer to position.where->next and directly reference
-      node* next_prev = position.where->next;
-      node* prev_next = position.where->prev;
-      next_prev->prev = prev_next;
-      prev_next->next = next_prev;
+      // deal with pointers surrounding position
+      node* next_ = position.where->next;
+      node* prev_ = position.where->prev;
+      next_->prev = prev_;
+      prev_->next = next_;
       delete position.where;
-      return iterator(next_prev);
+      return iterator(next_);
       
    }
    return end();
