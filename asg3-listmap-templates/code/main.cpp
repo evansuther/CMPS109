@@ -20,7 +20,8 @@ using namespace std;
 
 using str_str_map = listmap<string,string>;
 using str_str_pair = str_str_map::value_type;
-using str_key = str_str_map::key_type;
+
+const string cin_name = "-";
 
 void scan_options (int argc, char** argv) {
    opterr = 0;
@@ -64,7 +65,7 @@ void deal_with_lines(str_str_map& my_map, istream& instream,
             //print listmap
             DEBUGF('s', "this is key: " << result[1] <<
                         " this is value: " << result[2]);
-            for (auto itor = my_map.begin();
+            for (str_str_map::iterator itor = my_map.begin();
                   itor != my_map.end(); ++itor) {
                cout << itor->first << " = " << itor->second << endl;
             }
@@ -73,14 +74,26 @@ void deal_with_lines(str_str_map& my_map, istream& instream,
             //find by value and all pairs corresp to value
             DEBUGF('s', "this is key: " << result[1] <<
                         " this is value: " << result[2]);
+            auto itor = my_map.begin();
+            str_str_map::mapped_type temp = result[2];
+
+            while( itor != my_map.end()){
+
+               itor = my_map.find_value(temp, itor);
+               if(itor != my_map.end()){
+                  cout << itor->first << " = " << itor->second << endl;
+                  ++itor;   
+               }
+            }
+
          }
          else if(result[2] == ""){
             // erase case
             //see if key is in listmap
             DEBUGF('s', "this is key: " << result[1] <<
                         " this is value: " << result[2]);
-            auto itor = my_map.begin();
-            str_key temp = result[1];
+            str_str_map::iterator itor = my_map.begin();
+            str_str_map::key_type temp = result[1];
 
             itor = my_map.find(temp);
             DEBUGF('s', "itor: " << *itor);
@@ -101,8 +114,8 @@ void deal_with_lines(str_str_map& my_map, istream& instream,
             // else insert key value
             DEBUGF('s', "this is key: " << result[1] <<
                         " this is value: " << result[2]);
-            auto itor = my_map.begin();
-            str_key temp = result[1];
+            str_str_map::iterator itor = my_map.begin();
+            str_str_map::key_type temp = result[1];
             itor = my_map.find(temp);
             if(itor == my_map.end()){
                str_str_pair pair(result[1], result[2]);
@@ -120,7 +133,7 @@ void deal_with_lines(str_str_map& my_map, istream& instream,
       else if (regex_search (line, result, trimmed_regex)) {
          // find key in map
          auto itor = my_map.begin();
-         str_key temp = result[1];
+         str_str_map::key_type temp = result[1];
          itor = my_map.find(temp);
          //check to see if key was found or now
          if(itor == my_map.end()){
@@ -141,41 +154,39 @@ int main (int argc, char** argv) {
    char** argp = &argv[optind];
 
    if(argp ==  &argv[argc]){
-      deal_with_lines(my_map, cin, "-");
+      deal_with_lines(my_map, cin, cin_name);
    }
    else{
       //will not enter loop if no files are given
       for (; argp != &argv[argc]; ++argp) {
-         //test.prompt(argp);
          string curr = *argp;
-         ifstream fs(curr, std::fstream::ios_base::in);
-         
-         //counter = 1;
-         //str_str_pair pair;
-         if(fs.is_open()){
-            deal_with_lines(my_map, fs, curr);
+         if (curr == cin_name){
+            deal_with_lines(my_map, cin, cin_name);
+         }else{
+            ifstream fs(curr, std::fstream::ios_base::in);
+            if(fs.is_open()){// file in dir
+               deal_with_lines(my_map, fs, curr);
+            }
+            else{// file does not exist
+               complain() << curr << 
+                              ": No such file or directory" << endl;
+            } 
+
+            fs.close();
+            
          }
-         else{// file did not print
-            //cerr << complain();
-         } 
-         //str_str_pair pair (*argp, to_string<int> (argp - argv));
-         //cout << "Before insert: " << pair << endl;
-         //test.insert (pair);
-         fs.close();
       }
    }
-
-   //must have things in listmap first to enter???????????????????????
    for (str_str_map::iterator itor = my_map.begin();
         itor != my_map.end(); ++itor) {
-      cout << "During iteration: " << *itor << endl;
+      DEBUGF('s', "During iteration: " << *itor << endl);
    }
-
+   //free up alloc'd memory for nodes in listmap
    while (not (my_map.empty())){
       my_map.erase (my_map.begin());
    }
 
-   cout << "EXIT_SUCCESS" << endl;
-   return EXIT_SUCCESS;
+   DEBUGF('s', "exit_status_ " << sys_info::exit_status() << endl);
+   return sys_info::exit_status();
 }
 

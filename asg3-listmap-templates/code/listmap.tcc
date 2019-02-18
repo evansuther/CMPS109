@@ -103,6 +103,27 @@ listmap<Key,Value,Less>::find (const key_type& that) {
    return end();
 }
 
+//
+// listmap::find_value(const mapped_type&, iterator)
+//
+template <typename Key, typename Value, class Less>
+typename listmap<Key,Value,Less>::iterator
+listmap<Key,Value,Less>::find_value (const mapped_type& that, 
+                                       iterator itor) {
+   DEBUGF ('l', that);
+   if(empty()){
+      return end();
+   }
+   else{
+      while ( itor != end() ) {
+         if(itor->second == that){
+            return itor;
+         }
+         ++itor;
+      }
+   }
+   return end();
+}
 
 //
 // iterator listmap::erase (iterator position)

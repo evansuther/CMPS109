@@ -37,6 +37,7 @@ class listmap {
       ~listmap();
       iterator insert (const value_type&);
       iterator find (const key_type&);
+      iterator find_value(const mapped_type&, iterator);
       iterator erase (iterator position);
       iterator begin() { return anchor()->next; }
       iterator end() { return anchor(); }
