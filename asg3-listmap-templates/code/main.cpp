@@ -1,4 +1,4 @@
-// $Id: main.cpp,v 1.1 2019-02-17 15:37:07-08 - - $
+// $Id: main.cpp,v 1.1 2019-02-17 15:42:58-08 - - $
 /*
  * Partner: Evan Suther (esuther@ucsc.edu)
  * Partner: Derrick DeBose (ddebose@ucsc.edu)
@@ -54,7 +54,6 @@ void deal_with_lines(str_str_map& my_map, istream& instream,
       smatch result;
       //if found comment line
       if (regex_search (line, result, comment_regex)) {
-         cout << "Comment or empty line." << endl;
          continue;
       }
       //if found '=' in line
@@ -65,6 +64,10 @@ void deal_with_lines(str_str_map& my_map, istream& instream,
             //print listmap
             DEBUGF('s', "this is key: " << result[1] <<
                         " this is value: " << result[2]);
+            for (str_str_map::iterator itor = my_map.begin();
+                  itor != my_map.end(); ++itor) {
+               cout << itor->first << " = " << itor->second << endl;
+            }
          }
          else if(result[1] == ""){
             //find by value and all pairs corresp to value
@@ -74,8 +77,6 @@ void deal_with_lines(str_str_map& my_map, istream& instream,
          else if(result[2] == ""){
             // erase case
             //see if key is in listmap
-            //if in key map delete node
-            //else error no key to be deleted??
             DEBUGF('s', "this is key: " << result[1] <<
                         " this is value: " << result[2]);
             str_str_map::iterator itor = my_map.begin();
@@ -83,12 +84,14 @@ void deal_with_lines(str_str_map& my_map, istream& instream,
 
             itor = my_map.find(temp);
             DEBUGF('s', "itor: " << *itor);
+            //if key not in map throw err
             if ( itor == my_map.end() ){
-               cout << result[1] << ": key not found" << endl;
+               //key not found
                DEBUGF('s', "this is key: " << result[1] <<
                         " this is value: " << result[2]);
             }
             else{
+               //else erase the key in map
                my_map.erase(itor);
             }
          }
@@ -115,15 +118,17 @@ void deal_with_lines(str_str_map& my_map, istream& instream,
       }
       //need to check if this is a key
       else if (regex_search (line, result, trimmed_regex)) {
-         cout << "query: \"" << result[1] << "\"" << endl;
-         //iterator temp = test.find(result[1]);
-         //if(temp == end()){
-            //thing not found
-            //cerr << result[1] << ": key not found";
-         //}
-         //else{
-         //   temp.print_value();
-         //}
+         // find key in map
+         auto itor = my_map.begin();
+         str_str_map::key_type temp = result[1];
+         itor = my_map.find(temp);
+         //check to see if key was found or now
+         if(itor == my_map.end()){
+            cout << result[1] << ": key not found" << endl;
+         }
+         else{
+            cout << itor->first << " = " << itor->second << endl;
+         }
       }
    }
 }
