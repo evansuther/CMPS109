@@ -3,9 +3,9 @@
  * Partner: Evan Suther (esuther@ucsc.edu)
  * Partner: Derrick DeBose (ddebose@ucsc.edu)
  */
+
 #include <climits>
 #include <iostream>
-#include <vector>
 
 using namespace std;
 

@@ -3,6 +3,7 @@
  * Partner: Evan Suther (esuther@ucsc.edu)
  * Partner: Derrick DeBose (ddebose@ucsc.edu)
  */
+
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
@@ -56,20 +57,6 @@ const string datestring () {
 }
 
 
-list<string> split (const string& line, const string& delimiters) {
-   list<string> words;
-   size_t end = 0;
-   // Loop over the string, splitting out words, and for each word
-   // thus found, append it to the output list<string>.
-   for (;;) {
-      size_t start = line.find_first_not_of (delimiters, end);
-      if (start == string::npos) break;
-      end = line.find_first_of (delimiters, start);
-      words.push_back (line.substr (start, end - start));
-   }
-   DEBUGF ('u', words);
-   return words;
-}
 
 ostream& complain() {
    sys_info::exit_status (EXIT_FAILURE);

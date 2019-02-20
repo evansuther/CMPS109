@@ -3,6 +3,7 @@
  * Partner: Evan Suther (esuther@ucsc.edu)
  * Partner: Derrick DeBose (ddebose@ucsc.edu)
  */
+
 #ifndef __DEBUG_H__
 #define __DEBUG_H__
 

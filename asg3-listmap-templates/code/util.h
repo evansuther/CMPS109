@@ -3,6 +3,7 @@
  * Partner: Evan Suther (esuther@ucsc.edu)
  * Partner: Derrick DeBose (ddebose@ucsc.edu)
  */
+
 //
 // util -
 //    A utility class to provide various services not conveniently
@@ -13,7 +14,6 @@
 #define __UTIL_H__
 
 #include <iostream>
-#include <list>
 #include <stdexcept>
 #include <string>
 using namespace std;
@@ -52,7 +52,8 @@ const string datestring ();
 //    Split a pathname, use "/".  To split a shell command, use " ".
 //
 
-list<string> split (const string& line, const string& delimiter);
+// COMMENTED OUT TO AVOID PREVENTED STL TEMPLATES
+//list<string> split (const string& line, const string& delimiter);
 
 
 //
@@ -82,8 +83,10 @@ void syscall_error (const string&);
 //    defined for it.
 //
 
-template <typename item_t>
-ostream& operator<< (ostream& out, const list<item_t>& vec);
+
+// COMMENTED OUT TO AVOID PREVENTED STL TEMPLATES
+//template <typename item_t>
+//ostream& operator<< (ostream& out, const list<item_t>& vec);
 
 //
 // string to_string (thing) -
