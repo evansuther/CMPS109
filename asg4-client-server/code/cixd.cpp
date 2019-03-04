@@ -104,27 +104,32 @@ void reply_get (accepted_socket& client_sock, cix_header& header) {
 
    long file_size;
    size_t result;
-
+   unique_ptr<char[]> buffer;
    // obtain file size:
    // these 3 lines are from cplusplus.com
    fseek (fileptr , 0 , SEEK_END);
    file_size = ftell (fileptr);
    rewind (fileptr);
-   // file_size = fileptr->tellg(); requires ifstream
 
    reply.nbytes = static_cast<size_t> (file_size);
-   auto buffer = make_unique<char[]> (file_size);
-   // fread with size, size mthd from cplusplus.com
-   // asg suggests read from istream
-   result = fread ( buffer.get(), 1, file_size, fileptr);
-   if (result != static_cast<size_t> (file_size)) {
-      // file couldn't be read at some point 
-      cerr << reply.filename << ": "<< strerror (errno) << endl;
-      reply.command = cix_command::NAK;
-      reply.nbytes = errno;
-      send_packet (client_sock, &reply, sizeof reply);
-      return;
+
+   if (file_size != 0) {
+      buffer = make_unique<char[]> (file_size);
+      // fread with size, size mthd from cplusplus.com
+      // asg suggests read from istream
+
+      result = fread ( buffer.get(), 1, file_size, fileptr);
+      if (result != static_cast<size_t> (file_size)) {
+         // file couldn't be read at some point 
+         cerr << reply.filename << ": "<< strerror (errno) << endl;
+         reply.command = cix_command::NAK;
+         reply.nbytes = errno;
+         send_packet (client_sock, &reply, sizeof reply);
+         return;
+      }
+
    }
+
 
    int status = fclose (fileptr);
    if (status < 0) {
@@ -136,9 +141,31 @@ void reply_get (accepted_socket& client_sock, cix_header& header) {
       return;
    }
 
-   reply.command = cix_command::ACK;
+   reply.command = cix_command::FILEOUT;
    send_packet(client_sock, &reply, sizeof reply);
-   send_packet(client_sock, buffer.get(), file_size);
+   if (file_size != 0) {
+      send_packet(client_sock, buffer.get(), file_size);
+   }
+}
+
+void reply_rm(accepted_socket& client_sock, cix_header& header) {
+   log << "received header " << header << endl;
+   int remove = unlink(header.filename);
+   log << "stuck? remove is: " << remove << endl;
+   if(remove == 0){
+      header.command = cix_command::ACK;
+      header.nbytes = 0;
+      memset (header.filename, 0, FILENAME_SIZE);
+      send_packet (client_sock, &header, sizeof header);
+      return;
+   }
+   else{ 
+      header.command = cix_command::NAK;
+      header.nbytes = errno;
+      send_packet (client_sock, &header, sizeof header);
+      return;
+   }
+
 }
 
 
@@ -159,6 +186,9 @@ void run_server (accepted_socket& client_sock) {
                break;
             case cix_command::GET:
                reply_get(client_sock, header);
+               break;
+            case cix_command::RM:
+               reply_rm(client_sock, header);
                break;
             default:
                log << "invalid header from client:" << header << endl;

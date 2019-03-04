@@ -27,7 +27,8 @@ unordered_map<string,cix_command> command_map {
    {"help", cix_command::HELP},
    {"ls"  , cix_command::LS  },
    {"put" , cix_command::PUT },
-   {"get" , cix_command::GET }
+   {"get" , cix_command::GET },
+   {"rm", cix_command::RM}
 };
 
 static const string help = R"||(
@@ -150,9 +151,6 @@ void cix_get (client_socket& server, string filename) {
       cerr << "filename size too large" << endl;
       throw cix_exit();
    }
-   // couldnt directly assign header.filename with c_str()
-   // then lint complained about strcpy() and suggested snprintf
-   // I think I've done this in c but haven't tested here yet
    strncpy(header.filename, filename.c_str(), FILENAME_SIZE);
    log << "sending header " << header << endl;
    send_packet (server, &header, sizeof header);
@@ -165,8 +163,8 @@ void cix_get (client_socket& server, string filename) {
                << strerror(header.nbytes) << endl;   
          throw cix_exit();
    }
-   // check for not ack?***************
-   else if (header.command != cix_command::ACK){
+   // check for not FILEOUT?***************
+   else if (header.command != cix_command::FILEOUT){
       log << "sent GET, server did not return ACK OR NAK" << endl;
       log << "server returned " << header << endl;
    }
@@ -181,7 +179,10 @@ void cix_get (client_socket& server, string filename) {
       }
       // buffer to hold incoming payload
       auto buffer = make_unique<char[]> (header.nbytes);
-      recv_packet(server, buffer.get(), header.nbytes);
+      if (header.nbytes != 0)
+         recv_packet(server, buffer.get(), header.nbytes);
+         
+      
       // write whole buffer byte by byte, check status?????????
       fwrite(buffer.get(), 1, header.nbytes, fileptr);
       // attempt to close; if error, print it
@@ -202,6 +203,26 @@ void cix_get (client_socket& server, string filename) {
       
    }
 
+}
+
+void cix_rm (client_socket& server, string filename) {
+   cix_header header;
+   header.command = cix_command::RM;
+   // check FILENAME_SIZE before calling
+   memset (header.filename, 0, FILENAME_SIZE);
+   if (filename.size() > FILENAME_SIZE) {
+      cerr << "filename size too large" << endl;
+      throw cix_exit();
+   }
+   snprintf(header.filename, FILENAME_SIZE,"%s", filename.c_str());
+   log << "sending header " << header << endl;
+   send_packet (server, &header, sizeof header);
+   recv_packet (server, &header, sizeof header);
+   log << "received header " << header << endl;
+   if (header.command == cix_command::NAK ) {
+      log << header.filename << ": remove failed: " 
+          << strerror (header.nbytes) << endl;
+   }
 }
 
 
@@ -246,10 +267,25 @@ int main (int argc, char** argv) {
                cix_ls (server);
                break;
             case cix_command::PUT:
+               if (wordvec.size() != 2){
+                  cerr << "put: insufficient arguments" << endl;
+                  throw cix_exit();
+               }
                cix_put (server, wordvec.at(1));
                break;
             case cix_command::GET:
+               if (wordvec.size() != 2){
+                  cerr << "get: insufficient arguments" << endl;
+                  throw cix_exit();
+               }
                cix_get (server, wordvec.at(1));
+               break;
+            case cix_command::RM:
+               if (wordvec.size() != 2){
+                  cerr << "rm: insufficient arguments" << endl;
+                  throw cix_exit();
+               }
+               cix_rm (server, wordvec.at(1));
                break;
             default:
                log << line << ": invalid command" << endl;
