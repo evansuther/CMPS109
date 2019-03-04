@@ -1,4 +1,4 @@
-// $Id: cix.cpp,v 1.7 2019-02-07 15:14:37-08 - - $
+// $Id: cix.cpp,v 1.1 2019-03-03 23:35:44-08 - - $
 /*
  * Partner: Evan Suther (esuther@ucsc.edu)
  * Partner: Derrick DeBose (ddebose@ucsc.edu)
@@ -47,17 +47,15 @@ void cix_help() {
 void cix_ls (client_socket& server) {
    cix_header header;
    header.command = cix_command::LS;
-   log << "sending header " << header << endl;
    send_packet (server, &header, sizeof header);
    recv_packet (server, &header, sizeof header);
-   log << "received header " << header << endl;
    if (header.command != cix_command::LSOUT) {
-      log << "sent LS, server did not return LSOUT" << endl;
-      log << "server returned " << header << endl;
+      cerr << "sent LS, server did not return LSOUT" << endl;
+      cerr << "server returned :" << header << endl;
+      throw cix_exit();
    }else {
       auto buffer = make_unique<char[]> (header.nbytes + 1);
       recv_packet (server, buffer.get(), header.nbytes);
-      log << "received " << header.nbytes << " bytes" << endl;
       buffer[header.nbytes] = '\0';
       cout << buffer.get();
    }
@@ -111,34 +109,25 @@ void cix_put (client_socket& server, string filename) {
       throw cix_exit();
    }
 
-   log << "sending header " << header << endl;
    send_packet (server, &header, sizeof header);
 
    // don't send payload if no size
    if (file_size != 0) { 
-      log << "sending payload " << endl;
       send_packet (server, buffer.get(), file_size);
-      log << "sent " << file_size << " bytes" << endl;
-
    }
 
    // get response from server child
    recv_packet (server, &header, sizeof header);
-   log << "received header " << header << endl;
    if (header.command == cix_command::NAK ) {
       // some weird error happened on the server side
-      log << "put: "<< header.filename << ": " 
-            << strerror(header.nbytes) << endl;
+      cerr << "put: " << header.filename << strerror(header.nbytes)
+            << endl;
    }
    // check for not ack?***************
    else if (header.command != cix_command::ACK){
-      log << "sent PUT, server did not return ACK OR NAK" << endl;
-      log << "server returned " << header << endl;
-   }
-   else {
-      // still code from ls, just wait for ack/nak
-      log << "received header with nbytes = " 
-             << header.nbytes << " bytes" << endl;
+      cerr << "sent PUT, server did not return ACK OR NAK" << endl;
+      cerr << "server returned " << header << endl;
+      throw cix_exit();
    }
 }
 
@@ -152,11 +141,9 @@ void cix_get (client_socket& server, string filename) {
       throw cix_exit();
    }
    strncpy(header.filename, filename.c_str(), FILENAME_SIZE);
-   log << "sending header " << header << endl;
    send_packet (server, &header, sizeof header);
    // get response from server child
    recv_packet (server, &header, sizeof header);
-   log << "received header " << header << endl;
    if (header.command == cix_command::NAK ) {
          // some weird error happened on the server side
          cerr << "get: "<< header.filename << ": " 
@@ -165,12 +152,11 @@ void cix_get (client_socket& server, string filename) {
    }
    // check for not FILEOUT?***************
    else if (header.command != cix_command::FILEOUT){
-      log << "sent GET, server did not return ACK OR NAK" << endl;
-      log << "server returned " << header << endl;
+      cerr << "sent GET, server did not return FILEOUT OR NAK" << endl;
+      cerr << "server returned " << header << endl;
+      throw cix_exit();
    }
    else {
-      log << "received header with nbytes = " 
-             << header.nbytes << " bytes" << endl;
       // try to open file and check if it worked
       FILE* fileptr = fopen (filename.c_str(), "w");
       if (fileptr == nullptr) { 
@@ -186,23 +172,8 @@ void cix_get (client_socket& server, string filename) {
       // write whole buffer byte by byte, check status?????????
       fwrite(buffer.get(), 1, header.nbytes, fileptr);
       // attempt to close; if error, print it
-      int status = fclose (fileptr);
-      if (status < 0) {
-         cerr << header.filename << ": " << strerror (errno) << endl;
-         header.command = cix_command::NAK;
-         header.nbytes = errno;
-         send_packet (server, &header, sizeof header);
-         return; 
-      }
-      // will be deleted
-      else{
-         log << header.filename << ": exit " << (status >> 8)
-                   << " signal " << (status & 0x7F)
-                   << " core " << (status >> 7 & 1) << endl;
-      }
-      
+      fclose (fileptr);
    }
-
 }
 
 void cix_rm (client_socket& server, string filename) {
@@ -214,13 +185,11 @@ void cix_rm (client_socket& server, string filename) {
       cerr << "filename size too large" << endl;
       throw cix_exit();
    }
-   snprintf(header.filename, FILENAME_SIZE,"%s", filename.c_str());
-   log << "sending header " << header << endl;
+   strncpy(header.filename, filename.c_str(), FILENAME_SIZE);
    send_packet (server, &header, sizeof header);
    recv_packet (server, &header, sizeof header);
-   log << "received header " << header << endl;
    if (header.command == cix_command::NAK ) {
-      log << header.filename << ": remove failed: " 
+      cerr << header.filename << ": remove failed: " 
           << strerror (header.nbytes) << endl;
    }
 }
@@ -233,7 +202,7 @@ void usage() {
 }
 
 int main (int argc, char** argv) {
-   log.execname (basename (argv[0]));
+   log.execname (basename (argv[0])); // remove??
    log << "starting" << endl;
    vector<string> args (&argv[1], &argv[argc]);
    if (args.size() > 2) usage();
@@ -269,7 +238,7 @@ int main (int argc, char** argv) {
             case cix_command::PUT:
                if (wordvec.size() != 2){
                   cerr << "put: insufficient arguments" << endl;
-                  throw cix_exit();
+                  throw cix_exit(); // Should be break?????
                }
                cix_put (server, wordvec.at(1));
                break;
@@ -295,9 +264,9 @@ int main (int argc, char** argv) {
    }catch (socket_error& error) {
       log << error.what() << endl;
    }catch (cix_exit& error) {
-      log << "caught cix_exit" << endl;
+      //log << "caught cix_exit" << endl;
    }
-   log << "finishing" << endl;
+   //log << "finishing" << endl;
    return 0;
 }
 

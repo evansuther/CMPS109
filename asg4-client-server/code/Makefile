@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.12 2019-02-21 18:18:42-08 - - $
+# $Id: Makefile,v 1.1 2019-03-03 23:35:44-08 - - $
 
 # Partner: Evan Suther (esuther@ucsc.edu)
 # Partner: Derrick DeBose (ddebose@ucsc.edu)
@@ -65,6 +65,9 @@ ${DEPFILE}:
 
 again: ${ALLSOURCE}
 	${GMAKE} spotless dep ci all lis
+
+submit: 
+	submit cmps109-wm.w19 asg4 ${ALLSOURCE} README PARTNER
 
 ifeq (${NEEDINCL}, )
 include ${DEPFILE}

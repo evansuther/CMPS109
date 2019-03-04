@@ -1,4 +1,4 @@
-// $Id: cixd.cpp,v 1.7 2016-05-09 16:01:56-07 - - $
+// $Id: cixd.cpp,v 1.1 2019-03-03 23:35:44-08 - - $
 /*
  * Partner: Evan Suther (esuther@ucsc.edu)
  * Partner: Derrick DeBose (ddebose@ucsc.edu)
@@ -58,6 +58,7 @@ void reply_put (accepted_socket& client_sock, cix_header& header) {
    // header already received next packet is just payload/data
    if (header.nbytes != 0) 
       recv_packet (client_sock, data_buffer.get(), header.nbytes);
+   
    log << "received " << header.nbytes << " bytes" << endl;
    cout << data_buffer.get();
 
@@ -72,6 +73,7 @@ void reply_put (accepted_socket& client_sock, cix_header& header) {
       send_packet (client_sock, &header, sizeof header);
       return;
    }
+
    fwrite(data_buffer.get(), 1, header.nbytes, fileptr);
    int status = fclose (fileptr);
    if (status < 0) {
@@ -86,7 +88,6 @@ void reply_put (accepted_socket& client_sock, cix_header& header) {
    memset (reply.filename, 0, FILENAME_SIZE);
    log << "sending header " << reply << endl;
    send_packet (client_sock, &reply, sizeof reply);
-      
 }
 
 void reply_get (accepted_socket& client_sock, cix_header& header) {
