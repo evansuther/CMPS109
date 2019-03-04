@@ -241,7 +241,7 @@ int main (int argc, char** argv) {
                cix_put (server, wordvec.at(1));
                break;
             case cix_command::GET:
-               cix_put (server, wordvec.at(1));
+               cix_get (server, wordvec.at(1));
                break;
             default:
                log << line << ": invalid command" << endl;

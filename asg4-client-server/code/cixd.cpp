@@ -114,7 +114,7 @@ void reply_get (accepted_socket& client_sock, cix_header& header) {
    rewind (fileptr);
    // file_size = fileptr->tellg(); requires ifstream
 
-   header.nbytes = static_cast<size_t> (file_size);
+   reply.nbytes = static_cast<size_t> (file_size);
    // using 
    auto buffer = make_unique<char[]> (file_size);
    // fread with size, size mthd from cplusplus.com
@@ -157,6 +157,9 @@ void run_server (accepted_socket& client_sock) {
                break;
             case cix_command::PUT:
                reply_put(client_sock, header);
+               break;
+            case cix_command::GET:
+               reply_get(client_sock, header);
                break;
             default:
                log << "invalid header from client:" << header << endl;
