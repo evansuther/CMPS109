@@ -65,77 +65,79 @@ void cix_ls (client_socket& server) {
 void cix_put (client_socket& server, string filename) {
    cix_header header;
    header.command = cix_command::PUT;
-   // check FILENAME_SIZE before calling
+   // check FILENAME_SIZE before calling?
    memset (header.filename, 0, FILENAME_SIZE);
    if (filename.size() > FILENAME_SIZE) {
       cerr << "filename size too large" << endl;
       throw cix_exit();
    }
-   // couldnt directly assign header.filename with c_str()
-   // then lint complained about strcpy() and suggested snprintf
-   // I think I've done this in c but haven't tested here yet
-   snprintf(header.filename, FILENAME_SIZE,"%s", filename.c_str());
-   
+   // set (C->S) header filename
+   strncpy(header.filename, filename.c_str(), FILENAME_SIZE);
 
-   // open file, read bytes to buf, send
    FILE* fileptr = fopen (filename.c_str(), "r");
    if (fileptr == nullptr) { 
-      log << filename << ": "<< strerror (errno) << endl;
+      // file couldn't be accessed 
+      cerr << filename << ": "<< strerror (errno) << endl;
       throw cix_exit();
    }
-   // string ls_output;
    long file_size;
-   // char * buffer;
    size_t result;
-
+   unique_ptr<char[]> buffer;
    // obtain file size:
    // these 3 lines are from cplusplus.com
    fseek (fileptr , 0 , SEEK_END);
    file_size = ftell (fileptr);
    rewind (fileptr);
-   // file_size = fileptr->tellg(); requires ifstream
 
    header.nbytes = static_cast<size_t> (file_size);
-   // using 
-   auto buffer = make_unique<char[]> (file_size);
-   // fread with size, size mthd from cplusplus.com
-   // asg suggests read from istream
-   result = fread ( buffer.get(), 1, file_size, fileptr);
-   //result = fread (buffer)
-   if (result != static_cast<size_t> (file_size)) {
-      // CHANGE ****************************
-      fputs ("Reading error",stderr); exit (3);
+
+   if (file_size != 0) {
+      buffer = make_unique<char[]> (file_size);
+      // fread with size, size mthd from cplusplus.com
+      // asg suggests read from istream
+      result = fread ( buffer.get(), 1, file_size, fileptr);
+      if (result != static_cast<size_t> (file_size)) {
+         // file couldn't be read at some point 
+         cerr << "put: " << filename << ": Reading error";
+         throw cix_exit();
+      }
    }
-   /*if (size_or_eof < 0) log << filename << ": " << strerror (errno) 
-                           << endl;
-              else log << filename << "read was fucked" << endl; */
 
    int status = fclose (fileptr);
-   if (status < 0) log << filename << ": " << strerror (errno) << endl;
-              else log << filename << ": exit " << (status >> 8)
-                       << " signal " << (status & 0x7F)
-                       << " core " << (status >> 7 & 1) << endl;
-   
+   if (status < 0) { 
+      // file couldn't be closed, print why 
+      cerr << filename << ": "<< strerror (errno) << endl;
+      throw cix_exit();
+   }
+
    log << "sending header " << header << endl;
    send_packet (server, &header, sizeof header);
-   log << "sending payload " << endl;
-   send_packet (server, buffer.get(), file_size);
-   log << "sent " << file_size << " bytes" << endl;
+
+   // don't send payload if no size
+   if (file_size != 0) { 
+      log << "sending payload " << endl;
+      send_packet (server, buffer.get(), file_size);
+      log << "sent " << file_size << " bytes" << endl;
+
+   }
 
    // get response from server child
    recv_packet (server, &header, sizeof header);
    log << "received header " << header << endl;
    if (header.command == cix_command::NAK ) {
-      log << "sent PUT, server returned NAK" << endl;
-      log << "server returned header:" << header << endl;
-   }else {
+      // some weird error happened on the server side
+      log << "put: "<< header.filename << ": " 
+            << strerror(header.nbytes) << endl;
+   }
+   // check for not ack?***************
+   else if (header.command != cix_command::ACK){
+      log << "sent PUT, server did not return ACK OR NAK" << endl;
+      log << "server returned " << header << endl;
+   }
+   else {
       // still code from ls, just wait for ack/nak
-      //auto buffer2 = make_unique<char[]> (header.nbytes + 1);
-      //recv_packet (server, buffer2.get(), header.nbytes);
       log << "received header with nbytes = " 
              << header.nbytes << " bytes" << endl;
-      //buffer[header.nbytes] = '\0';
-      //cout << buffer2.get();
    }
 }
 
@@ -151,40 +153,47 @@ void cix_get (client_socket& server, string filename) {
    // couldnt directly assign header.filename with c_str()
    // then lint complained about strcpy() and suggested snprintf
    // I think I've done this in c but haven't tested here yet
-   snprintf(header.filename, FILENAME_SIZE,"%s", filename.c_str());
+   strncpy(header.filename, filename.c_str(), FILENAME_SIZE);
    log << "sending header " << header << endl;
    send_packet (server, &header, sizeof header);
    // get response from server child
    recv_packet (server, &header, sizeof header);
    log << "received header " << header << endl;
    if (header.command == cix_command::NAK ) {
-      log << "sent PUT, server returned NAK" << endl;
-      log << "server returned header:" << header << endl;
-   }else {
-      // still code from ls, just wait for ack/nak
-      //auto buffer2 = make_unique<char[]> (header.nbytes + 1);
-      //recv_packet (server, buffer2.get(), header.nbytes);
+         // some weird error happened on the server side
+         cerr << "get: "<< header.filename << ": " 
+               << strerror(header.nbytes) << endl;   
+         throw cix_exit();
+   }
+   // check for not ack?***************
+   else if (header.command != cix_command::ACK){
+      log << "sent GET, server did not return ACK OR NAK" << endl;
+      log << "server returned " << header << endl;
+   }
+   else {
       log << "received header with nbytes = " 
              << header.nbytes << " bytes" << endl;
-      //buffer[header.nbytes] = '\0';
-      //cout << buffer2.get();
-      // open file, read bytes to buf, send
+      // try to open file and check if it worked
       FILE* fileptr = fopen (filename.c_str(), "w");
       if (fileptr == nullptr) { 
-         log << filename << ": "<< strerror (errno) << endl;
+         cerr << filename << ": "<< strerror (errno) << endl;
          throw cix_exit();
       }
+      // buffer to hold incoming payload
       auto buffer = make_unique<char[]> (header.nbytes);
       recv_packet(server, buffer.get(), header.nbytes);
+      // write whole buffer byte by byte, check status?????????
       fwrite(buffer.get(), 1, header.nbytes, fileptr);
+      // attempt to close; if error, print it
       int status = fclose (fileptr);
       if (status < 0) {
-         log << header.filename << ": " << strerror (errno) << endl;
+         cerr << header.filename << ": " << strerror (errno) << endl;
          header.command = cix_command::NAK;
          header.nbytes = errno;
          send_packet (server, &header, sizeof header);
          return; 
       }
+      // will be deleted
       else{
          log << header.filename << ": exit " << (status >> 8)
                    << " signal " << (status & 0x7F)
@@ -222,7 +231,6 @@ int main (int argc, char** argv) {
 
          // split line on whitespace
          vector<string> wordvec = split(line, " \t");
-         log << "wordvec.at(0) = " << wordvec.at(0) << endl;
          // look up cmd not whole line
          const auto& itor = command_map.find (wordvec.at(0));
          cix_command cmd = itor == command_map.end()

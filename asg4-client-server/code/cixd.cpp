@@ -53,58 +53,56 @@ void reply_ls (accepted_socket& client_sock, cix_header& header) {
 }
 
 void reply_put (accepted_socket& client_sock, cix_header& header) {
-
-      auto data_buffer = make_unique<char[]> (header.nbytes + 1);
-      // header already received next packed is just data
+   auto data_buffer = make_unique<char[]> (header.nbytes);
+   log << "made buffer of size: " << header.nbytes <<  endl;
+   // header already received next packet is just payload/data
+   if (header.nbytes != 0) 
       recv_packet (client_sock, data_buffer.get(), header.nbytes);
-      log << "received " << header.nbytes << " bytes" << endl;
-      //buffer[header.nbytes] = '\0';
-      cout << data_buffer.get();
+   log << "received " << header.nbytes << " bytes" << endl;
+   cout << data_buffer.get();
 
-      cix_header reply;
+   cix_header reply;
+   // attempt to open file and check if it worked
+   FILE* fileptr = fopen (header.filename, "w");
+   if (fileptr == NULL) { 
+      cerr << header.filename << ": fopen failed: " 
+            << strerror (errno) << endl;
+      header.command = cix_command::NAK;
+      header.nbytes = errno;
+      send_packet (client_sock, &header, sizeof header);
+      return;
+   }
+   fwrite(data_buffer.get(), 1, header.nbytes, fileptr);
+   int status = fclose (fileptr);
+   if (status < 0) {
+      cerr << header.filename << ": " << strerror (errno) << endl;
+      header.command = cix_command::NAK;
+      header.nbytes = errno;
+      send_packet (client_sock, &header, sizeof header);
+      return; 
+   }
 
-      FILE* fileptr = fopen (header.filename, "w");
-      if (fileptr == NULL) { 
-         log << header.filename << ": fopen failed: " 
-               << strerror (errno) << endl;
-         header.command = cix_command::NAK;
-         header.nbytes = errno;
-         send_packet (client_sock, &header, sizeof header);
-         return;
-      }
-      
-      fwrite(data_buffer.get(), 1, header.nbytes, fileptr);
-      int status = fclose (fileptr);
-      if (status < 0) {
-         log << header.filename << ": " << strerror (errno) << endl;
-         header.command = cix_command::NAK;
-         header.nbytes = errno;
-         send_packet (client_sock, &header, sizeof header);
-         return; 
-      }
-      else{
-         log << header.filename << ": exit " << (status >> 8)
-                   << " signal " << (status & 0x7F)
-                   << " core " << (status >> 7 & 1) << endl;
-      }
-      reply.command = cix_command::ACK;
-      memset (reply.filename, 0, FILENAME_SIZE);
-      log << "sending header " << reply << endl;
-      send_packet (client_sock, &reply, sizeof reply);
+   reply.command = cix_command::ACK;
+   memset (reply.filename, 0, FILENAME_SIZE);
+   log << "sending header " << reply << endl;
+   send_packet (client_sock, &reply, sizeof reply);
       
 }
 
 void reply_get (accepted_socket& client_sock, cix_header& header) {
-      // open file, read bytes to buf, send
+   // open file, read bytes to buf, send
    cix_header reply;
+   strncpy(reply.filename, header.filename, FILENAME_SIZE);
    FILE* fileptr = fopen (header.filename, "r");
    if (fileptr == nullptr) { 
-      log << header.filename << ": "<< strerror (errno) << endl;
-      throw cix_exit();
+      cerr << header.filename << ": "<< strerror (errno) << endl;
+      reply.command = cix_command::NAK;
+      reply.nbytes = errno;
+      send_packet (client_sock, &reply, sizeof reply);
+      return;
    }
-   // string ls_output;
+
    long file_size;
-   // char * buffer;
    size_t result;
 
    // obtain file size:
@@ -115,29 +113,30 @@ void reply_get (accepted_socket& client_sock, cix_header& header) {
    // file_size = fileptr->tellg(); requires ifstream
 
    reply.nbytes = static_cast<size_t> (file_size);
-   // using 
    auto buffer = make_unique<char[]> (file_size);
    // fread with size, size mthd from cplusplus.com
    // asg suggests read from istream
    result = fread ( buffer.get(), 1, file_size, fileptr);
-   //result = fread (buffer)
    if (result != static_cast<size_t> (file_size)) {
-      // CHANGE ****************************
-      fputs ("Reading error",stderr); exit (3);
+      // file couldn't be read at some point 
+      cerr << reply.filename << ": "<< strerror (errno) << endl;
+      reply.command = cix_command::NAK;
+      reply.nbytes = errno;
+      send_packet (client_sock, &reply, sizeof reply);
+      return;
    }
-   /*if (size_or_eof < 0) log << filename << ": " << strerror (errno) 
-                           << endl;
-              else log << filename << "read was fucked" << endl; */
 
    int status = fclose (fileptr);
-   if (status < 0) log << header.filename << ": " 
-                     << strerror (errno) << endl;
-              else log << header.filename << ": exit " << (status >> 8)
-                       << " signal " << (status & 0x7F)
-                       << " core " << (status >> 7 & 1) << endl;
+   if (status < 0) {
+      log << header.filename << ": " 
+            << strerror (errno) << endl;
+      reply.command = cix_command::NAK;
+      reply.nbytes = errno;
+      send_packet (client_sock, &reply, sizeof reply);
+      return;
+   }
 
    reply.command = cix_command::ACK;
-   strncpy(reply.filename, header.filename, FILENAME_SIZE);
    send_packet(client_sock, &reply, sizeof reply);
    send_packet(client_sock, buffer.get(), file_size);
 }
